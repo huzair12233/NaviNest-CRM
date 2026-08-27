@@ -41,7 +41,7 @@ sold, and the lead flips to *Converted* — automatically.
 |---|---|---|
 | Framework | **Next.js 15 (App Router) + TypeScript** | One deployable full-stack app; React Server Components keep data-heavy CRM pages fast; Server Actions remove most client/API glue |
 | Data | **Prisma ORM** | Type-safe queries, painless migrations, portable across databases |
-| Database | **SQLite in dev**, **PostgreSQL in production** | Zero-setup local dev so the app *just runs*; the schema is written to be Postgres-portable (enum-like values are `String` + validated centrally). See §7 |
+| Database | **PostgreSQL** (Neon free tier) | Schema is written portably — enum-like values are `String` + validated centrally, no native enums/arrays. See §7 |
 | Auth | **`jose` (JWT) + `bcryptjs`**, httpOnly cookie | No heavy dependency; full control; enforced in every Server Action / loader via `requireUser()` / `requireRole()` |
 | Styling | **Tailwind CSS v3** + hand-built component library | Distinctive, consistent UI without a generic admin-template look |
 | Validation | **Zod**, shared schemas | Same rules on client hints and server enforcement |
@@ -57,7 +57,6 @@ prisma/
   schema.prisma          data model (16 models)
   seed.ts                clean start: 1 admin + lead sources
   seed-demo.ts           full fictional demo dataset
-  migrations/
 src/
   app/
     login/               auth screen
@@ -124,7 +123,7 @@ npm install
 cp .env.example .env          # set AUTH_SECRET + ADMIN_PASSWORD
 
 # 3. Database
-npm run db:migrate            # create schema
+npm run db:push               # create schema in Postgres
 npm run db:seed               # clean start: 1 admin + lead sources
 #   -- OR --
 npm run db:seed:demo         # full fictional demo dataset (leads, deals, …)
@@ -144,8 +143,7 @@ npm run dev                   # http://localhost:3000
 |---|---|
 | `npm run dev` | Development server |
 | `npm run build` / `npm start` | Production build & serve |
-| `npm run db:migrate` | Create/apply a migration (dev) |
-| `npm run db:deploy` | Apply migrations (production) |
+| `npm run db:push` | Sync schema.prisma to the database |
 | `npm run db:seed` | Wipe everything, create 1 admin + lead sources |
 | `npm run db:seed:demo` | Wipe everything, load full fictional dataset |
 | `npm run db:studio` | Prisma Studio (browse the DB) |
@@ -166,22 +164,34 @@ npm run dev                   # http://localhost:3000
 
 ---
 
-## 7. Deploying to PostgreSQL
+## 7. Deploying (Vercel + Neon)
 
-1. In `prisma/schema.prisma` change the datasource:
-   ```prisma
-   datasource db {
-     provider = "postgresql"
-     url      = env("DATABASE_URL")
-   }
+The app targets **PostgreSQL** (`prisma/schema.prisma` uses `provider = "postgresql"`).
+There is no local SQLite fallback any more — point local dev at a Neon database too
+(Neon's free tier allows branching if you want dev/prod separation).
+
+### One-time setup
+
+1. **Create a database** at [neon.tech](https://neon.tech) (free). From *Connection Details* copy:
+   - the **Pooled** string → `DATABASE_URL`
+   - the **Direct** string → `DIRECT_URL`
+2. **Locally**, put both in `.env` plus a real `AUTH_SECRET` and `ADMIN_PASSWORD`, then:
+   ```bash
+   npm run db:push      # creates all tables in Neon from schema.prisma
+   npm run db:seed      # creates your admin user + lead sources
    ```
-2. Set `DATABASE_URL` to your Postgres connection string and a strong `AUTH_SECRET`.
-3. `npx prisma migrate deploy` then optionally `npm run db:seed`.
-4. Deploy (Vercel, a Node host, or Docker). The app is a standard Next.js build.
+3. **Vercel** → Project → Settings → Environment Variables — add for *Production*:
+   `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET` (and `ADMIN_*` are optional there).
+4. Redeploy. Build command is the default `npm run build` (`prisma generate && next build`).
 
-The schema deliberately avoids DB-specific features (native enums, array columns) so this
-switch needs no data-model rewrite. Enum-like values are `String` columns validated in
-`src/lib/constants.ts` + Zod; list fields (preferred locations, amenities) are
+### When you change the schema later
+
+Run `npm run db:push` again (locally, against Neon) before deploying. Once real data
+matters, switch to migrations: `npx prisma migrate dev --name <change>` and add
+`prisma migrate deploy` to the Vercel build.
+
+The schema avoids DB-specific features (native enums, array columns) — enum-like values
+are `String` columns validated in `src/lib/constants.ts` + Zod; list fields are
 comma-separated strings.
 
 ---
@@ -255,8 +265,7 @@ skeleton `loading.tsx` on every route so navigation feels instant.
    human timeline) and, for tracked fields, an `AuditLog` (who changed what, old → new).
 4. **Rule-based matching, honestly labelled.** The scoring function is small, weighted and
    readable; the UI says "rule-based fit", never "AI".
-5. **Portable schema.** SQLite for a frictionless clone-and-run; documented one-line switch
-   to PostgreSQL for production.
+5. **Portable schema.** No DB-specific features, so it runs on any Postgres (Neon, Supabase, RDS) unchanged.
 6. **Design system, not a template.** Hand-built primitives and a NaviNest brand palette
    (teal = trust, warm neutrals = property, ink = technology).
 
