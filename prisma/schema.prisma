@@ -1,0 +1,469 @@
+// NaviNest Realtors CRM — data model
+// Dev uses SQLite for zero-setup. For production switch `provider` to "postgresql"
+// (see README "Deployment"). Enum-like fields are stored as String + validated in
+// src/lib/constants.ts / Zod so the schema stays portable across both databases.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// People & access
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         String   @default("SALES") // ADMIN | MANAGER | SALES
+  avatarColor  String   @default("#0F766E")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  leads           Lead[]         @relation("LeadOwner")
+  createdLeads    Lead[]         @relation("LeadCreator")
+  followUps       FollowUp[]     @relation("FollowUpOwner")
+  siteVisits      SiteVisit[]    @relation("SiteVisitOwner")
+  deals           Deal[]         @relation("DealOwner")
+  tasks           Task[]         @relation("TaskOwner")
+  createdTasks    Task[]         @relation("TaskCreator")
+  activities      Activity[]
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+  addedProperties Property[]     @relation("PropertyCreator")
+  contacts        Contact[]
+  owners          Owner[]
+  channelPartners ChannelPartner[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Configuration
+// ─────────────────────────────────────────────────────────────────────────────
+
+model LeadSource {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  category String  @default("Other") // Portal | Social | Referral | Direct | Partner | Other
+  active   Boolean @default(true)
+  sortkey  Int     @default(100)
+  leads    Lead[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Contacts / Owners / Channel partners
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Contact {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String   @unique
+  altPhone    String?
+  whatsapp    String?
+  email       String?
+  type        String   @default("Buyer") // Buyer | Tenant | Seller | Landlord | Owner | Investor | ChannelPartner | Referral | Other
+  notes       String?
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  leads Lead[]
+  deals Deal[]
+}
+
+model Owner {
+  id                 String   @id @default(cuid())
+  name               String
+  phone              String
+  whatsapp           String?
+  email              String?
+  preferredContact   String   @default("Call") // Call | WhatsApp | Email
+  relationshipStatus String   @default("Active") // Active | Cold | VIP | DoNotContact
+  notes              String?
+  lastContactedAt    DateTime?
+  createdById        String?
+  createdBy          User?    @relation(fields: [createdById], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  properties Property[]
+  deals      Deal[]
+}
+
+model ChannelPartner {
+  id          String   @id @default(cuid())
+  name        String
+  company     String?
+  phone       String
+  email       String?
+  reraId      String?
+  notes       String?
+  active      Boolean  @default(true)
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  leads Lead[]
+  deals Deal[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Projects / Societies & Properties
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Project {
+  id        String     @id @default(cuid())
+  name      String
+  type      String     @default("Residential") // Residential | Commercial | Mixed
+  location  String
+  city      String     @default("Navi Mumbai")
+  developer String?
+  notes     String?
+  createdAt DateTime   @default(now())
+  properties Property[]
+
+  @@unique([name, location])
+}
+
+model Property {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  title          String
+  listingType    String   @default("SALE") // SALE | RENT
+  segment        String   @default("Residential") // Residential | Commercial
+  propertyType   String   @default("Apartment") // Apartment | Villa | Plot | Office | Shop | Warehouse | RowHouse
+  bhk            Float?
+  projectId      String?
+  project        Project? @relation(fields: [projectId], references: [id])
+  location       String
+  address        String?
+  city           String   @default("Navi Mumbai")
+  carpetArea     Int?
+  builtupArea    Int?
+  floor          Int?
+  totalFloors    Int?
+  furnishing     String   @default("Unfurnished") // Unfurnished | Semi | Furnished
+  parking        Int      @default(0)
+  bathrooms      Int?
+  balcony        Int?
+  ageYears       Int?
+  possession     String   @default("Ready") // Ready | UnderConstruction | NewLaunch
+  salePrice      Int?
+  rent           Int?
+  deposit        Int?
+  maintenance    Int?
+  ownerId        String?
+  owner          Owner?   @relation(fields: [ownerId], references: [id])
+  listingSource  String   @default("Direct")
+  addedById      String?
+  addedBy        User?    @relation("PropertyCreator", fields: [addedById], references: [id])
+  status         String   @default("Available") // Available | Hold | UnderNegotiation | Sold | Rented | Inactive
+  description    String?
+  amenities      String?  // comma-separated amenity list
+  photos         Json?    // string[] (urls / data)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  interests  PropertyInterest[]
+  siteVisits SiteVisit[]
+  deals      Deal[]
+  activities Activity[]
+  tasks      Task[]        @relation("PropertyTasks")
+
+  @@index([status])
+  @@index([listingType])
+}
+
+// Lead <-> Property : shared / interested / rejected
+model PropertyInterest {
+  id         String   @id @default(cuid())
+  leadId     String
+  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  status     String   @default("SHARED") // SHARED | INTERESTED | REJECTED
+  matchScore Int?
+  notes      String?
+  sharedAt   DateTime @default(now())
+
+  @@unique([leadId, propertyId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Leads
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Lead {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  fullName      String
+  phone         String
+  altPhone      String?
+  whatsapp      String?
+  email         String?
+
+  leadType      String   @default("Buyer")   // Buyer | Tenant | Seller | Landlord | Investor | Owner | Other
+  interest      String   @default("SALE")     // SALE | RENT | BOTH
+  status        String   @default("New")
+  temperature   String   @default("Warm")     // Hot | Warm | Cold
+  priority      String   @default("Normal")   // High | Normal | Low
+
+  // Requirement
+  propertyType  String?
+  bhk           Float?
+  locations     String?  // comma-separated list of preferred localities
+  preferredProject String?
+  budgetMin     Int?
+  budgetMax     Int?
+  areaMin       Int?
+  areaMax       Int?
+  furnishing    String?  // Unfurnished | Semi | Furnished | Any
+  parkingReq    Boolean  @default(false)
+  floorPref     String?
+  possessionReq String?  // Ready | UnderConstruction | Any
+  moveInDate    DateTime?
+  loanRequired  Boolean  @default(false)
+  occupancy     String?  // Family | Bachelor | Company
+  requirementNotes String?
+
+  // Rental specifics
+  rentMin       Int?
+  rentMax       Int?
+  depositMax    Int?
+
+  sourceId      String?
+  source        LeadSource? @relation(fields: [sourceId], references: [id])
+  channelPartnerId String?
+  channelPartner ChannelPartner? @relation(fields: [channelPartnerId], references: [id])
+
+  contactId     String?
+  contact       Contact? @relation(fields: [contactId], references: [id])
+
+  assignedToId  String?
+  assignedTo    User?    @relation("LeadOwner", fields: [assignedToId], references: [id])
+  createdById   String?
+  createdBy     User?    @relation("LeadCreator", fields: [createdById], references: [id])
+
+  lostReason    String?
+  lastActivityAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  followUps  FollowUp[]
+  siteVisits SiteVisit[]
+  interests  PropertyInterest[]
+  activities Activity[]
+  deals      Deal[]
+  tasks      Task[]     @relation("LeadTasks")
+
+  @@index([status])
+  @@index([interest])
+  @@index([assignedToId])
+  @@index([temperature])
+  @@index([lastActivityAt])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Follow-ups / Site visits / Tasks
+// ─────────────────────────────────────────────────────────────────────────────
+
+model FollowUp {
+  id             String   @id @default(cuid())
+  leadId         String
+  lead           Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  assignedToId   String?
+  assignedTo     User?    @relation("FollowUpOwner", fields: [assignedToId], references: [id])
+  dueAt          DateTime
+  type           String   @default("Call") // Call | WhatsApp | Email | PropertySharing | SiteVisitFollowUp | Negotiation | DocumentFollowUp | PaymentFollowUp | General
+  purpose        String?
+  notes          String?
+  priority       String   @default("Normal")
+  status         String   @default("Pending") // Pending | Completed | Cancelled
+  outcome        String?
+  completedAt    DateTime?
+  nextFollowUpAt DateTime?
+  createdById    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status])
+  @@index([dueAt])
+  @@index([leadId])
+  @@index([assignedToId])
+}
+
+model SiteVisit {
+  id            String   @id @default(cuid())
+  leadId        String
+  lead          Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  propertyId    String?
+  property      Property? @relation(fields: [propertyId], references: [id])
+  assignedToId  String?
+  assignedTo    User?    @relation("SiteVisitOwner", fields: [assignedToId], references: [id])
+  scheduledAt   DateTime
+  location      String?
+  status        String   @default("Scheduled") // Scheduled | Confirmed | Completed | Rescheduled | Cancelled | NoShow
+
+  // Feedback
+  interested     String?  // Yes | Maybe | No
+  rating         Int?
+  liked          String?
+  disliked       String?
+  objections     String?
+  priceFeedback  String?
+  competitor     String?
+  nextAction     String?
+  feedbackAt     DateTime?
+
+  createdById   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([leadId])
+  @@index([assignedToId])
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  assignedToId String?
+  assignedTo  User?    @relation("TaskOwner", fields: [assignedToId], references: [id])
+  dueAt       DateTime?
+  priority    String   @default("Normal")
+  status      String   @default("Pending") // Pending | InProgress | Completed | Cancelled
+  notes       String?
+
+  leadId      String?
+  lead        Lead?    @relation("LeadTasks", fields: [leadId], references: [id])
+  propertyId  String?
+  property    Property? @relation("PropertyTasks", fields: [propertyId], references: [id])
+
+  createdById String?
+  createdBy   User?    @relation("TaskCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Deals & Commissions
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Deal {
+  id                String   @id @default(cuid())
+  code              String   @unique
+  title             String
+  leadId            String?
+  lead              Lead?    @relation(fields: [leadId], references: [id])
+  propertyId        String?
+  property          Property? @relation(fields: [propertyId], references: [id])
+  contactId         String?
+  contact           Contact? @relation(fields: [contactId], references: [id])
+  ownerId           String?
+  owner             Owner?   @relation(fields: [ownerId], references: [id])
+  channelPartnerId  String?
+  channelPartner    ChannelPartner? @relation(fields: [channelPartnerId], references: [id])
+
+  type              String   @default("SALE") // SALE | RENT
+  value             Int      @default(0)
+  stage             String   @default("Qualified") // see constants PIPELINE_STAGES
+  probability       Int      @default(20)
+  expectedCloseDate DateTime?
+  assignedToId      String?
+  assignedTo        User?    @relation("DealOwner", fields: [assignedToId], references: [id])
+  notes             String?
+  closedAt          DateTime?
+  lostReason        String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  commission Commission?
+  activities Activity[]
+
+  @@index([stage])
+  @@index([assignedToId])
+  @@index([leadId])
+  @@index([closedAt])
+}
+
+model Commission {
+  id               String   @id @default(cuid())
+  dealId           String   @unique
+  deal             Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  dealValue        Int      @default(0)
+  percentage       Float    @default(1.0)
+  expectedAmount   Int      @default(0)
+  receivedAmount   Int      @default(0)
+  paymentDate      DateTime?
+  employeeSharePct Float    @default(30)
+  companySharePct  Float    @default(70)
+  status           String   @default("Pending") // Pending | Partial | Received
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Activity timeline / Audit / Notifications
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Activity {
+  id         String   @id @default(cuid())
+  type       String   // see constants ACTIVITY_TYPES
+  summary    String
+  meta       Json?
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  leadId     String?
+  lead       Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  propertyId String?
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  dealId     String?
+  deal       Deal?    @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([leadId])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String   // CREATE | UPDATE | DELETE | STATUS_CHANGE | ASSIGN
+  entity    String
+  entityId  String
+  field     String?
+  oldValue  String?
+  newValue  String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String?
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt])
+}
