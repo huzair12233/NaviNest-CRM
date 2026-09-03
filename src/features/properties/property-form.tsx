@@ -95,6 +95,12 @@ export function PropertyForm({
           <TextAreaField name="description" label="Description" defaultValue={g("description") as string} className="mt-4" />
         </FormSection>
 
+        {mode === "create" && (
+          <p className="mb-4 rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-800">
+            📸 Save the listing first, then add photos from its page.
+          </p>
+        )}
+
         <div className="flex items-center gap-2">
           <SubmitButton>{mode === "create" ? "Add property" : "Save changes"}</SubmitButton>
           <ButtonLink variant="ghost" href={property ? `/properties/${property.id}` : "/properties"}>

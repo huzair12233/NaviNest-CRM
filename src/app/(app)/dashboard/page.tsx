@@ -4,7 +4,6 @@ import { db } from "@/lib/db";
 import { isManager } from "@/lib/rbac";
 import { PageHeader } from "@/components/ui/misc";
 import { Card, CardHeader, CardBody } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { KpiCard } from "@/features/dashboard/kpi-card";
 import {
   getDashboardData,

@@ -6,7 +6,6 @@ import { getParam, type SearchParams } from "@/lib/pagination";
 import { startOfMonth } from "@/lib/utils";
 import { PageHeader, EmptyState } from "@/components/ui/misc";
 import { KpiCard } from "@/features/dashboard/kpi-card";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
 import { FilterSelect } from "@/components/ui/query-controls";

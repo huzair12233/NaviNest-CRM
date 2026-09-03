@@ -4,14 +4,18 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { matchLeads, matchBadge } from "@/lib/matching";
 import { OPEN_LEAD_STATUSES } from "@/lib/constants";
-import { PageHeader, StatRow, Divider, Avatar, EmptyState } from "@/components/ui/misc";
+import { PageHeader, StatRow, Divider, EmptyState } from "@/components/ui/misc";
 import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import { Badge, propertyStatusTone } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { PropertyStatusMenu } from "@/features/properties/status-menu";
+import { PhotoGallery } from "@/features/properties/photo-gallery";
+import { PhotoUploader } from "@/features/properties/photo-uploader";
 import { Timeline } from "@/features/activity/timeline";
+import { parsePhotos } from "@/lib/photos";
+import { cloudinaryConfigured } from "@/lib/cloudinary";
 import { inr, toArray, formatDate } from "@/lib/utils";
-import { Building, Pencil, MapPin, Home } from "lucide-react";
+import { Building, Pencil, MapPin, Home, Camera } from "lucide-react";
 
 export default async function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -48,6 +52,8 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
   const sharedLeadIds = new Set(property.interests.map((i) => i.lead.id));
   const amenities = toArray(property.amenities);
   const isRent = property.listingType === "RENT";
+  const photos = parsePhotos(property.photos);
+  const cldOk = cloudinaryConfigured();
 
   return (
     <>
@@ -81,10 +87,31 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
 
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="space-y-5 lg:col-span-2">
-          <Card>
-            <div className="grid h-44 place-items-center rounded-t-xl bg-gradient-to-br from-brand-50 to-ink-100 text-ink-300">
-              <Home className="h-10 w-10" />
+          {photos.length > 0 && (
+            <div className="overflow-hidden rounded-xl">
+              <PhotoGallery photos={photos} />
             </div>
+          )}
+
+          <Card>
+            <CardHeader
+              title={
+                <span className="inline-flex items-center gap-2">
+                  <Camera className="h-4 w-4 text-ink-400" /> Photos ({photos.length})
+                </span>
+              }
+            />
+            <CardBody>
+              <PhotoUploader propertyId={property.id} photos={photos} configured={cldOk} />
+            </CardBody>
+          </Card>
+
+          <Card>
+            {photos.length === 0 && (
+              <div className="grid h-44 place-items-center rounded-t-xl bg-gradient-to-br from-brand-50 to-ink-100 text-ink-300">
+                <Home className="h-10 w-10" />
+              </div>
+            )}
             <CardBody>
               <StatRow
                 items={[

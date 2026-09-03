@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isManager } from "@/lib/rbac";
-import { PageHeader, Avatar, StatRow, Divider, EmptyState } from "@/components/ui/misc";
+import { PageHeader, Avatar, StatRow, Divider } from "@/components/ui/misc";
 import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import {
   Badge,

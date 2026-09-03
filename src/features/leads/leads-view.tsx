@@ -19,7 +19,7 @@ import {
   BHK_OPTIONS,
   AGEING_BUCKETS,
 } from "@/lib/constants";
-import { inr, inrRange, relativeTime, toArray } from "@/lib/utils";
+import { inrRange, relativeTime, toArray } from "@/lib/utils";
 import { Users, Plus, Phone } from "lucide-react";
 
 const FILTER_KEYS = ["q", "status", "temperature", "priority", "assignedToId", "sourceId", "bhk", "age", "bucket", "location", "sort"];

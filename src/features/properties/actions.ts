@@ -6,6 +6,8 @@ import { requireUser } from "@/lib/auth";
 import { propertySchema } from "@/lib/validation";
 import { ActionState, fail, ok, fromZod, formToObject } from "@/lib/action-result";
 import { logActivity, logAudit } from "@/lib/activity";
+import { parsePhotos, type Photo } from "@/lib/photos";
+import { destroyImage } from "@/lib/cloudinary";
 
 async function nextPropertyCode() {
   const count = await db.property.count();
@@ -107,4 +109,72 @@ export async function setPropertyStatus(id: string, status: string): Promise<Act
   revalidatePath(`/properties/${id}`);
   revalidatePath("/properties");
   return ok(`Marked ${status}`);
+}
+
+// ── Photos ──────────────────────────────────────────────────────────────────
+
+const MAX_PHOTOS = 20;
+
+export async function addPropertyPhotos(id: string, incoming: Photo[]): Promise<ActionState> {
+  const user = await requireUser();
+  const property = await db.property.findUnique({ where: { id }, select: { photos: true } });
+  if (!property) return fail("Property not found");
+
+  const current = parsePhotos(property.photos);
+  const seen = new Set(current.map((p) => p.publicId));
+  const clean = incoming
+    .filter((p) => p && p.url && p.publicId && !seen.has(p.publicId))
+    .map((p) => ({ url: p.url, publicId: p.publicId, width: p.width, height: p.height }));
+  if (!clean.length) return ok("No new photos");
+
+  const next = [...current, ...clean].slice(0, MAX_PHOTOS);
+  await db.property.update({ where: { id }, data: { photos: next } });
+  await logActivity({
+    type: "LEAD_UPDATED",
+    summary: `${clean.length} photo${clean.length > 1 ? "s" : ""} added`,
+    propertyId: id,
+    userId: user.id,
+  });
+
+  revalidatePath(`/properties/${id}`);
+  revalidatePath(`/properties/${id}/edit`);
+  revalidatePath("/properties");
+  return ok(`${clean.length} photo${clean.length > 1 ? "s" : ""} added`);
+}
+
+export async function removePropertyPhoto(id: string, publicId: string): Promise<ActionState> {
+  const user = await requireUser();
+  const property = await db.property.findUnique({ where: { id }, select: { photos: true } });
+  if (!property) return fail("Property not found");
+
+  const current = parsePhotos(property.photos);
+  const next = current.filter((p) => p.publicId !== publicId);
+  if (next.length === current.length) return ok("Already removed");
+
+  await db.property.update({ where: { id }, data: { photos: next } });
+  await destroyImage(publicId);
+  await logActivity({ type: "LEAD_UPDATED", summary: "Photo removed", propertyId: id, userId: user.id });
+
+  revalidatePath(`/properties/${id}`);
+  revalidatePath(`/properties/${id}/edit`);
+  revalidatePath("/properties");
+  return ok("Photo removed");
+}
+
+export async function setCoverPhoto(id: string, publicId: string): Promise<ActionState> {
+  await requireUser();
+  const property = await db.property.findUnique({ where: { id }, select: { photos: true } });
+  if (!property) return fail("Property not found");
+
+  const current = parsePhotos(property.photos);
+  const target = current.find((p) => p.publicId === publicId);
+  if (!target) return fail("Photo not found");
+
+  const next = [target, ...current.filter((p) => p.publicId !== publicId)];
+  await db.property.update({ where: { id }, data: { photos: next } });
+
+  revalidatePath(`/properties/${id}`);
+  revalidatePath(`/properties/${id}/edit`);
+  revalidatePath("/properties");
+  return ok("Cover photo updated");
 }

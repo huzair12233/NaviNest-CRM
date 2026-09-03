@@ -24,7 +24,7 @@ sold, and the lead flips to *Converted* — automatically.
 | **Property matching** | Transparent **rule-based** 0–100 score (location, budget, BHK, area, type, furnishing, parking). Not "AI" — a documented weighting in `src/lib/matching.ts` |
 | **Follow-ups** | Today / Overdue / Upcoming / Completed tabs, complete-with-outcome + auto-schedule-next |
 | **Site visits** | Scheduling + structured post-visit feedback (interest, rating, likes/dislikes, objections, price feedback, next action) written to the lead timeline |
-| **Properties** | Inventory with availability lifecycle, detail page with matched/interested leads, owner, transaction history |
+| **Properties** | Inventory with availability lifecycle, **photo galleries** (Cloudinary, signed uploads, lightbox), detail page with matched/interested leads, owner, transaction history |
 | **Projects / Societies, Owners, Contacts** | Directory modules; owners show all their properties; contacts block duplicate phone numbers |
 | **Pipeline** | Kanban board by stage with per-card stage advance controls |
 | **Deals & Commissions** | Deal lifecycle, stage automation, commission auto-created on *Closed Won* with expected/received/pending, employee/company split; commission edit gated to managers |
@@ -181,7 +181,9 @@ There is no local SQLite fallback any more — point local dev at a Neon databas
    npm run db:seed      # creates your admin user + lead sources
    ```
 3. **Vercel** → Project → Settings → Environment Variables — add for *Production*:
-   `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET` (and `ADMIN_*` are optional there).
+   - `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`  (required)
+   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`  (for property photos)
+   - `ADMIN_*`  (optional)
 4. Redeploy. Build command is the default `npm run build` (`prisma generate && next build`).
 
 ### When you change the schema later
@@ -193,6 +195,18 @@ matters, switch to migrations: `npx prisma migrate dev --name <change>` and add
 The schema avoids DB-specific features (native enums, array columns) — enum-like values
 are `String` columns validated in `src/lib/constants.ts` + Zod; list fields are
 comma-separated strings.
+
+### Property photos (Cloudinary)
+
+Photos are stored on Cloudinary (free tier is plenty — see the analysis you were given).
+Uploads are **signed server-side** (`/api/cloudinary/sign` + `src/lib/cloudinary.ts`), so
+the API secret never reaches the browser. The image `url` + `publicId` are saved on
+`Property.photos` (JSON); delivery uses on-the-fly Cloudinary transforms (`f_auto,q_auto`,
+resize) so no extra storage is used for thumbnails. Removing a photo also deletes it from
+Cloudinary. If the `CLOUDINARY_*` vars are absent the uploader shows a "not configured"
+notice instead of erroring — the rest of the app is unaffected.
+
+Manage photos from a property's detail page or its edit page (uploads save immediately).
 
 ---
 

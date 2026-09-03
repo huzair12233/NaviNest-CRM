@@ -9,7 +9,8 @@ import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
 import { SearchBox, FilterSelect, ClearFilters, Pagination } from "@/components/ui/query-controls";
 import { PROPERTY_TYPES, PROPERTY_STATUSES, BHK_OPTIONS } from "@/lib/constants";
 import { inr } from "@/lib/utils";
-import { Building, Plus } from "lucide-react";
+import { parsePhotos, cldCard } from "@/lib/photos";
+import { Building, Plus, ImageIcon } from "lucide-react";
 
 const KEYS = ["q", "listingType", "segment", "propertyType", "status", "bhk", "sort"];
 
@@ -72,13 +73,25 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
               </tr>
             </THead>
             <TBody>
-              {rows.map((p) => (
+              {rows.map((p) => {
+                const cover = parsePhotos(p.photos)[0];
+                return (
                 <TR key={p.id}>
                   <TD>
-                    <Link href={`/properties/${p.id}`} className="block">
-                      <span className="font-medium text-ink-900 hover:text-brand-700">{p.title}</span>
-                      <span className="mt-0.5 block text-xs text-ink-400">
-                        {p.code} · {p.listingType === "RENT" ? "Rent" : "Sale"} · {p.segment}
+                    <Link href={`/properties/${p.id}`} className="flex items-center gap-3">
+                      <span className="grid h-11 w-14 shrink-0 place-items-center overflow-hidden rounded-md bg-ink-100 text-ink-300">
+                        {cover ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={cldCard(cover.url)} alt="" className="h-full w-full object-cover" loading="lazy" />
+                        ) : (
+                          <ImageIcon className="h-4 w-4" />
+                        )}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block font-medium text-ink-900 hover:text-brand-700">{p.title}</span>
+                        <span className="mt-0.5 block text-xs text-ink-400">
+                          {p.code} · {p.listingType === "RENT" ? "Rent" : "Sale"} · {p.segment}
+                        </span>
                       </span>
                     </Link>
                   </TD>
@@ -101,7 +114,8 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                     {p._count.interests} leads · {p._count.siteVisits} visits
                   </TD>
                 </TR>
-              ))}
+                );
+              })}
             </TBody>
           </Table>
           <Pagination page={page} pageSize={pageSize} total={total} />

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Building2, Menu, X, Bell, LogOut, ChevronDown } from "lucide-react";
 import { NAV } from "./nav-config";
-import { cn, initials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/misc";
 import { GlobalSearch } from "./global-search";
 import { logoutAction } from "@/features/auth/actions";
