@@ -7,8 +7,8 @@ import { ButtonLink } from "@/components/ui/button";
 import { Badge, propertyStatusTone } from "@/components/ui/badge";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
 import { SearchBox, FilterSelect, ClearFilters, Pagination } from "@/components/ui/query-controls";
-import { PROPERTY_TYPES, PROPERTY_STATUSES, BHK_OPTIONS } from "@/lib/constants";
-import { inr } from "@/lib/utils";
+import { PROPERTY_TYPES, PROPERTY_STATUSES, BHK_OPTIONS, PROPERTY_LISTING_TYPES, PROPERTY_LISTING_LABELS } from "@/lib/constants";
+import { listingPrice } from "@/lib/utils";
 import { parsePhotos, cldCard } from "@/lib/photos";
 import { Building, Plus, ImageIcon } from "lucide-react";
 
@@ -33,7 +33,11 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <SearchBox placeholder="Title, code or location…" />
-        <FilterSelect name="listingType" options={[{ value: "SALE", label: "For Sale" }, { value: "RENT", label: "For Rent" }]} allLabel="Sale + Rent" />
+        <FilterSelect
+          name="listingType"
+          options={PROPERTY_LISTING_TYPES.map((v) => ({ value: v, label: PROPERTY_LISTING_LABELS[v] }))}
+          allLabel="All types"
+        />
         <FilterSelect name="segment" options={["Residential", "Commercial"]} />
         <FilterSelect name="propertyType" label="Type" options={PROPERTY_TYPES} />
         <FilterSelect name="bhk" label="BHK" options={BHK_OPTIONS.map((b) => ({ value: String(b), label: `${b} BHK` }))} />
@@ -90,7 +94,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                       <span className="min-w-0">
                         <span className="block font-medium text-ink-900 hover:text-brand-700">{p.title}</span>
                         <span className="mt-0.5 block text-xs text-ink-400">
-                          {p.code} · {p.listingType === "RENT" ? "Rent" : "Sale"} · {p.segment}
+                          {p.code} · {PROPERTY_LISTING_LABELS[p.listingType] ?? p.listingType} · {p.segment}
                         </span>
                       </span>
                     </Link>
@@ -104,7 +108,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                     {p.carpetArea ? <span className="block text-xs text-ink-400">{p.carpetArea} sqft</span> : null}
                   </TD>
                   <TD align="right" className="whitespace-nowrap font-medium">
-                    {p.listingType === "RENT" ? `${inr(p.rent)}/mo` : inr(p.salePrice)}
+                    {listingPrice(p)}
                   </TD>
                   <TD className="text-sm text-ink-500">{p.owner?.name ?? "—"}</TD>
                   <TD>

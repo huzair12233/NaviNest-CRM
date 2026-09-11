@@ -29,8 +29,12 @@ export function scoreMatch(lead: Lead, property: Property): MatchResult | null {
   // Hard filters
   const wantRent = lead.interest === "RENT";
   const wantSale = lead.interest === "SALE";
+  const wantHeavyDeposit = lead.interest === "HEAVY_DEPOSIT";
   if (wantRent && property.listingType !== "RENT") return null;
   if (wantSale && property.listingType !== "SALE") return null;
+  if (wantHeavyDeposit && property.listingType !== "HEAVY_DEPOSIT") return null;
+  // Heavy Deposit is its own category — don't let a generic (BOTH) lead match it either.
+  if (!wantHeavyDeposit && property.listingType === "HEAVY_DEPOSIT") return null;
   if (!["Available", "Hold"].includes(property.status)) return null;
 
   let score = 0;
@@ -49,8 +53,13 @@ export function scoreMatch(lead: Lead, property: Property): MatchResult | null {
     gaps.push(`Wants ${wantLocations.join(", ")}`);
   }
 
-  // Budget (25)
-  const price = property.listingType === "RENT" ? property.rent : property.salePrice;
+  // Budget (25) — heavy-deposit compares against the property's deposit amount
+  const price =
+    property.listingType === "HEAVY_DEPOSIT"
+      ? property.deposit
+      : property.listingType === "RENT"
+        ? property.rent
+        : property.salePrice;
   const min = property.listingType === "RENT" ? lead.rentMin : lead.budgetMin;
   const max = property.listingType === "RENT" ? lead.rentMax : lead.budgetMax;
   if (price == null || (min == null && max == null)) {

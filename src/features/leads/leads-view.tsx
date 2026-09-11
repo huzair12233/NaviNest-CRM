@@ -34,7 +34,7 @@ export async function LeadsView({
   sp: SearchParams;
   title: string;
   subtitle: string;
-  interest?: "SALE" | "RENT";
+  interest?: "SALE" | "RENT" | "HEAVY_DEPOSIT";
   breadcrumb?: { label: string; href?: string }[];
 }) {
   const user = await requireUser();

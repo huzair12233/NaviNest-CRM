@@ -20,11 +20,21 @@ export const LEAD_TYPES = [
   "Other",
 ] as const;
 
-export const INTERESTS = ["SALE", "RENT", "BOTH"] as const;
+export const INTERESTS = ["SALE", "RENT", "HEAVY_DEPOSIT", "BOTH"] as const;
 export const INTEREST_LABELS: Record<string, string> = {
   SALE: "Sale",
   RENT: "Rental",
+  HEAVY_DEPOSIT: "Heavy Deposit",
   BOTH: "Sale + Rental",
+};
+
+// Property listing category — mirrors INTERESTS but this is what a *property*
+// (rather than a lead's requirement) is listed as.
+export const PROPERTY_LISTING_TYPES = ["SALE", "RENT", "HEAVY_DEPOSIT"] as const;
+export const PROPERTY_LISTING_LABELS: Record<string, string> = {
+  SALE: "For Sale",
+  RENT: "For Rent",
+  HEAVY_DEPOSIT: "Heavy Deposit",
 };
 
 // Lead lifecycle — ordered

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isManager } from "@/lib/rbac";
+import { INTEREST_LABELS } from "@/lib/constants";
 import { PageHeader, Avatar, StatRow, Divider } from "@/components/ui/misc";
 import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import {
@@ -19,6 +20,7 @@ import { SiteVisitFeedbackButton } from "@/features/sitevisits/feedback-button";
 import {
   inr,
   inrRange,
+  listingPrice,
   formatDate,
   formatDateTime,
   relativeTime,
@@ -53,7 +55,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       },
       interests: {
         orderBy: { sharedAt: "desc" },
-        include: { property: { select: { id: true, code: true, title: true, location: true, salePrice: true, rent: true, listingType: true, status: true } } },
+        include: { property: { select: { id: true, code: true, title: true, location: true, salePrice: true, rent: true, deposit: true, listingType: true, status: true } } },
       },
       deals: { select: { id: true, code: true, stage: true, value: true } },
     },
@@ -63,7 +65,11 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const [team, propList] = await Promise.all([
     db.user.findMany({ where: { active: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
     db.property.findMany({
-      where: { listingType: lead.interest === "RENT" ? "RENT" : "SALE", status: { in: ["Available", "Hold"] } },
+      where: {
+        listingType:
+          lead.interest === "RENT" ? "RENT" : lead.interest === "HEAVY_DEPOSIT" ? "HEAVY_DEPOSIT" : "SALE",
+        status: { in: ["Available", "Hold"] },
+      },
       orderBy: { createdAt: "desc" },
       take: 60,
       select: { id: true, code: true, title: true },
@@ -74,6 +80,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const ageDays = daysBetween(startOfDay(), startOfDay(lead.lastActivityAt));
   const locs = toArray(lead.locations);
   const isRent = lead.interest === "RENT";
+  const isHeavyDeposit = lead.interest === "HEAVY_DEPOSIT";
 
   return (
     <>
@@ -105,7 +112,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           {lead.temperature}
         </Badge>
         <Badge tone={priorityTone(lead.priority)}>{lead.priority} priority</Badge>
-        <Badge tone="slate">{isRent ? "Rental" : lead.interest === "BOTH" ? "Sale + Rental" : "Sale"}</Badge>
+        <Badge tone="slate">{INTEREST_LABELS[lead.interest] ?? lead.interest}</Badge>
         {lead.source && <Badge tone="brand">{lead.source.name}</Badge>}
         <span className="text-xs text-ink-400">
           Age {ageDays === 0 ? "today" : `${ageDays}d`} · created {formatDate(lead.createdAt)}
@@ -138,7 +145,10 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               <StatRow
                 items={[
                   { label: "Looking for", value: `${lead.bhk ? lead.bhk + " BHK " : ""}${lead.propertyType ?? "Any"}` },
-                  { label: isRent ? "Rent" : "Budget", value: isRent ? inrRange(lead.rentMin, lead.rentMax) : inrRange(lead.budgetMin, lead.budgetMax) },
+                  {
+                    label: isRent ? "Rent" : isHeavyDeposit ? "Deposit budget" : "Budget",
+                    value: isRent ? inrRange(lead.rentMin, lead.rentMax) : inrRange(lead.budgetMin, lead.budgetMax),
+                  },
                   ...(isRent ? [{ label: "Max deposit", value: inr(lead.depositMax) }] : []),
                   { label: "Carpet area", value: lead.areaMin || lead.areaMax ? `${lead.areaMin ?? "?"}–${lead.areaMax ?? "?"} sqft` : "—" },
                   { label: "Furnishing", value: lead.furnishing ?? "Any" },
@@ -190,8 +200,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                           {it.property.title}
                         </Link>
                         <p className="text-xs text-ink-400">
-                          {it.property.code} · {it.property.location} ·{" "}
-                          {inr(it.property.listingType === "RENT" ? it.property.rent : it.property.salePrice)}
+                          {it.property.code} · {it.property.location} · {listingPrice(it.property)}
                         </p>
                       </div>
                       {it.matchScore != null && <span className="text-xs font-semibold text-brand-700">{it.matchScore}%</span>}

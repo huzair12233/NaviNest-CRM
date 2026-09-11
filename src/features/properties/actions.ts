@@ -65,6 +65,7 @@ export async function createProperty(_prev: ActionState, fd: FormData): Promise<
 
   if (d.listingType === "SALE" && !d.salePrice) return fail("Sale price is required for a sale listing", { salePrice: "Required" });
   if (d.listingType === "RENT" && !d.rent) return fail("Monthly rent is required for a rental listing", { rent: "Required" });
+  if (d.listingType === "HEAVY_DEPOSIT" && !d.deposit) return fail("Deposit amount is required for a heavy deposit listing", { deposit: "Required" });
 
   const projectId = await resolveProject(d.projectName, d.location);
   const property = await db.property.create({

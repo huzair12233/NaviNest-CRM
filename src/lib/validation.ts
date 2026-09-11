@@ -3,6 +3,7 @@ import { isValidPhone } from "./utils";
 import {
   LEAD_TYPES,
   INTERESTS,
+  PROPERTY_LISTING_TYPES,
   LEAD_STATUSES,
   TEMPERATURES,
   PRIORITIES,
@@ -136,7 +137,7 @@ export const siteVisitFeedbackSchema = z.object({
 
 export const propertySchema = z.object({
   title: z.string().trim().min(3, "Title is required"),
-  listingType: z.enum(["SALE", "RENT"]),
+  listingType: z.enum(PROPERTY_LISTING_TYPES),
   segment: z.enum(["Residential", "Commercial"]),
   propertyType: z.enum(PROPERTY_TYPES),
   bhk: num,

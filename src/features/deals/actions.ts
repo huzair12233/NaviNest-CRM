@@ -36,7 +36,7 @@ export async function createDeal(_prev: ActionState, fd: FormData): Promise<Acti
       contactId: d.contactId || null,
       ownerId: d.ownerId || property?.ownerId || null,
       type: d.type,
-      value: d.value || property?.salePrice || (property?.rent ? property.rent * 12 : 0),
+      value: d.value || property?.salePrice || property?.deposit || (property?.rent ? property.rent * 12 : 0),
       stage: d.stage,
       probability: d.probability ?? stageProbability(d.stage),
       expectedCloseDate: d.expectedCloseDate ?? null,

@@ -6,6 +6,8 @@ import { ButtonLink } from "@/components/ui/button";
 import type { ActionState } from "@/lib/action-result";
 import {
   PROPERTY_TYPES,
+  PROPERTY_LISTING_TYPES,
+  PROPERTY_LISTING_LABELS,
   FURNISHINGS,
   POSSESSIONS,
   PROPERTY_STATUSES,
@@ -45,7 +47,14 @@ export function PropertyForm({
         <FormSection title="Basics">
           <TextField name="title" label="Listing title" required defaultValue={g("title") as string} placeholder="2 BHK Apartment in Bhagwati Greens" />
           <FormGrid cols={3}>
-            <SelectField name="listingType" label="Listing" options={[{ value: "SALE", label: "For Sale" }, { value: "RENT", label: "For Rent" }]} defaultValue={(g("listingType") as string) ?? "SALE"} required className="mt-4" />
+            <SelectField
+              name="listingType"
+              label="Listing"
+              options={PROPERTY_LISTING_TYPES.map((v) => ({ value: v, label: PROPERTY_LISTING_LABELS[v] }))}
+              defaultValue={(g("listingType") as string) ?? "SALE"}
+              required
+              className="mt-4"
+            />
             <SelectField name="segment" label="Segment" options={["Residential", "Commercial"]} defaultValue={(g("segment") as string) ?? "Residential"} required className="mt-4" />
             <SelectField name="propertyType" label="Property type" options={PROPERTY_TYPES} defaultValue={(g("propertyType") as string) ?? "Apartment"} required className="mt-4" />
             <SelectField name="bhk" label="BHK" options={BHK_OPTIONS.map((b) => ({ value: String(b), label: `${b} BHK` }))} defaultValue={g("bhk") ? String(g("bhk")) : ""} placeholder="N/A" className="mt-4" />
@@ -82,7 +91,7 @@ export function PropertyForm({
           <FormGrid cols={2}>
             <TextField name="salePrice" label="Sale price (₹)" type="number" defaultValue={g("salePrice")} hint="For sale listings" />
             <TextField name="rent" label="Monthly rent (₹)" type="number" defaultValue={g("rent")} hint="For rental listings" />
-            <TextField name="deposit" label="Deposit (₹)" type="number" defaultValue={g("deposit")} />
+            <TextField name="deposit" label="Deposit (₹)" type="number" defaultValue={g("deposit")} hint="Primary figure for Heavy Deposit listings" />
             <TextField name="maintenance" label="Maintenance (₹/mo)" type="number" defaultValue={g("maintenance")} />
           </FormGrid>
         </FormSection>

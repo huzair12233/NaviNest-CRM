@@ -30,6 +30,19 @@ export function inrRange(min?: number | null, max?: number | null): string {
   return min != null ? `${inr(min)}+` : `Up to ${inr(max)}`;
 }
 
+/** The one headline figure for a property, based on its listing category. */
+export function listingPrice(p: { listingType: string; salePrice?: number | null; rent?: number | null; deposit?: number | null }): string {
+  if (p.listingType === "RENT") return `${inr(p.rent)}/mo`;
+  if (p.listingType === "HEAVY_DEPOSIT") return `${inr(p.deposit)} deposit`;
+  return inr(p.salePrice);
+}
+
+/** The one budget figure for a lead's requirement, based on its interest. */
+export function leadBudget(l: { interest: string; budgetMin?: number | null; budgetMax?: number | null; rentMin?: number | null; rentMax?: number | null }): string {
+  if (l.interest === "RENT") return inrRange(l.rentMin, l.rentMax);
+  return inrRange(l.budgetMin, l.budgetMax);
+}
+
 export function formatDate(d?: Date | string | null): string {
   if (!d) return "—";
   const date = typeof d === "string" ? new Date(d) : d;

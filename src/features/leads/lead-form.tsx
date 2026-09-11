@@ -153,7 +153,9 @@ export function LeadForm({
           />
           <TextField name="preferredProject" label="Preferred project / society" defaultValue={lead?.preferredProject} className="mt-4" />
 
-          <p className="mt-4 text-xs text-ink-400">Fill budget for sale, or rent &amp; deposit for rental — whichever applies.</p>
+          <p className="mt-4 text-xs text-ink-400">
+            Fill Budget for sale (or as the deposit range for Heavy Deposit), or Rent &amp; Max deposit for rental — whichever applies.
+          </p>
           <FormGrid cols={3}>
             <TextField name="budgetMin" label="Budget min (₹)" type="number" defaultValue={lead?.budgetMin} className="mt-2" />
             <TextField name="budgetMax" label="Budget max (₹)" type="number" defaultValue={lead?.budgetMax} className="mt-2" />

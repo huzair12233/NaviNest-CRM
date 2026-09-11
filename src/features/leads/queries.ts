@@ -12,7 +12,7 @@ export type LeadListItem = Awaited<ReturnType<typeof getLeads>>["rows"][number];
 export async function getLeads(
   user: SessionUser,
   sp: SearchParams,
-  opts: { interest?: "SALE" | "RENT" } = {},
+  opts: { interest?: "SALE" | "RENT" | "HEAVY_DEPOSIT" } = {},
 ) {
   const { skip, take, page, pageSize } = paginate(sp);
   const and: Prisma.LeadWhereInput[] = [leadScope(user)];
@@ -23,6 +23,7 @@ export async function getLeads(
   const interest = opts.interest ?? getParam(sp, "interest");
   if (interest === "SALE") and.push({ interest: { in: ["SALE", "BOTH"] } });
   else if (interest === "RENT") and.push({ interest: { in: ["RENT", "BOTH"] } });
+  else if (interest === "HEAVY_DEPOSIT") and.push({ interest: "HEAVY_DEPOSIT" });
 
   const status = getParam(sp, "status");
   if (status) and.push({ status });

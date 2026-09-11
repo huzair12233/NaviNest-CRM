@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { matchLeads, matchBadge } from "@/lib/matching";
-import { OPEN_LEAD_STATUSES } from "@/lib/constants";
+import { OPEN_LEAD_STATUSES, PROPERTY_LISTING_LABELS } from "@/lib/constants";
 import { PageHeader, StatRow, Divider, EmptyState } from "@/components/ui/misc";
 import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import { Badge, propertyStatusTone } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ import { PhotoUploader } from "@/features/properties/photo-uploader";
 import { Timeline } from "@/features/activity/timeline";
 import { parsePhotos } from "@/lib/photos";
 import { cloudinaryConfigured } from "@/lib/cloudinary";
-import { inr, toArray, formatDate } from "@/lib/utils";
+import { inr, listingPrice, toArray, formatDate } from "@/lib/utils";
 import { Building, Pencil, MapPin, Home, Camera } from "lucide-react";
 
 export default async function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -41,10 +41,16 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
   });
   if (!property) notFound();
 
+  const candidateInterests =
+    property.listingType === "RENT"
+      ? (["RENT", "BOTH"] as const)
+      : property.listingType === "HEAVY_DEPOSIT"
+        ? (["HEAVY_DEPOSIT"] as const)
+        : (["SALE", "BOTH"] as const);
   const openLeads = await db.lead.findMany({
     where: {
       status: { in: [...OPEN_LEAD_STATUSES] },
-      interest: property.listingType === "RENT" ? { in: ["RENT", "BOTH"] } : { in: ["SALE", "BOTH"] },
+      interest: { in: [...candidateInterests] },
     },
     take: 150,
   });
@@ -77,11 +83,9 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <Badge tone={propertyStatusTone(property.status)}>{property.status}</Badge>
-        <Badge tone="slate">{isRent ? "For Rent" : "For Sale"}</Badge>
+        <Badge tone="slate">{PROPERTY_LISTING_LABELS[property.listingType] ?? property.listingType}</Badge>
         <Badge tone="slate">{property.segment}</Badge>
-        <span className="text-lg font-semibold text-ink-900">
-          {isRent ? `${inr(property.rent)}/mo` : inr(property.salePrice)}
-        </span>
+        <span className="text-lg font-semibold text-ink-900">{listingPrice(property)}</span>
         {isRent && property.deposit ? <span className="text-sm text-ink-500">Deposit {inr(property.deposit)}</span> : null}
       </div>
 

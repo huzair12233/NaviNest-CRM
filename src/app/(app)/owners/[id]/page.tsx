@@ -7,7 +7,7 @@ import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import { Badge, propertyStatusTone } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { LogContactButton } from "@/features/directory/log-contact-button";
-import { inr, formatDate, relativeTime } from "@/lib/utils";
+import { listingPrice, formatDate, relativeTime } from "@/lib/utils";
 import { Pencil, Phone, MessageCircle, Mail, Building } from "lucide-react";
 
 export default async function OwnerDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -70,7 +70,7 @@ export default async function OwnerDetailPage({ params }: { params: Promise<{ id
                   <li key={p.id} className="flex items-center justify-between px-5 py-3">
                     <div>
                       <Link href={`/properties/${p.id}`} className="text-sm font-medium text-ink-900 hover:text-brand-700">{p.title}</Link>
-                      <p className="text-xs text-ink-400">{p.code} · {p.location} · {p.listingType === "RENT" ? `${inr(p.rent)}/mo` : inr(p.salePrice)}</p>
+                      <p className="text-xs text-ink-400">{p.code} · {p.location} · {listingPrice(p)}</p>
                     </div>
                     <Badge tone={propertyStatusTone(p.status)}>{p.status}</Badge>
                   </li>

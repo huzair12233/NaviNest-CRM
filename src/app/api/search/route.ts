@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { leadScope } from "@/lib/rbac";
-import { inr } from "@/lib/utils";
+import { listingPrice } from "@/lib/utils";
 
 export async function GET(req: Request) {
   const user = await getSession();
@@ -21,7 +21,7 @@ export async function GET(req: Request) {
     db.property.findMany({
       where: { OR: [{ title: like }, { code: like }, { location: like }, { address: like }] },
       take: 6,
-      select: { id: true, code: true, title: true, location: true, listingType: true, salePrice: true, rent: true },
+      select: { id: true, code: true, title: true, location: true, listingType: true, salePrice: true, rent: true, deposit: true },
     }),
     db.owner.findMany({
       where: { OR: [{ name: like }, { phone: like }] },
@@ -45,7 +45,7 @@ export async function GET(req: Request) {
     ...properties.map((p) => ({
       type: "Properties",
       label: p.title,
-      sub: `${p.code} · ${p.location} · ${inr(p.listingType === "RENT" ? p.rent : p.salePrice)}`,
+      sub: `${p.code} · ${p.location} · ${listingPrice(p)}`,
       href: `/properties/${p.id}`,
     })),
     ...owners.map((o) => ({ type: "Owners", label: o.name, sub: o.phone, href: `/owners/${o.id}` })),

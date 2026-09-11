@@ -114,7 +114,7 @@ export async function createLead(_prev: ActionState, fd: FormData): Promise<Acti
 
   await logActivity({
     type: "LEAD_CREATED",
-    summary: `Lead created (${d.interest === "RENT" ? "rental" : "sale"} enquiry)`,
+    summary: `Lead created (${d.interest === "RENT" ? "rental" : d.interest === "HEAVY_DEPOSIT" ? "heavy deposit" : "sale"} enquiry)`,
     leadId: lead.id,
     userId: user.id,
   });

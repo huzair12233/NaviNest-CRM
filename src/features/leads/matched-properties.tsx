@@ -3,13 +3,14 @@ import type { Lead } from "@prisma/client";
 import { db } from "@/lib/db";
 import { matchProperties, matchBadge } from "@/lib/matching";
 import { Badge } from "@/components/ui/badge";
-import { inr } from "@/lib/utils";
+import { listingPrice } from "@/lib/utils";
 import { ShareMatchButton } from "./share-match-button";
 import { EmptyState } from "@/components/ui/misc";
 import { Building } from "lucide-react";
 
 export async function MatchedProperties({ lead }: { lead: Lead }) {
-  const listingType = lead.interest === "RENT" ? "RENT" : "SALE";
+  const listingType =
+    lead.interest === "RENT" ? "RENT" : lead.interest === "HEAVY_DEPOSIT" ? "HEAVY_DEPOSIT" : "SALE";
   const candidates = await db.property.findMany({
     where: { listingType, status: { in: ["Available", "Hold"] } },
     take: 120,
@@ -45,7 +46,7 @@ export async function MatchedProperties({ lead }: { lead: Lead }) {
                 {p.title}
               </Link>
               <p className="truncate text-xs text-ink-400">
-                {p.code} · {p.location} · {inr(listingType === "RENT" ? p.rent : p.salePrice)}
+                {p.code} · {p.location} · {listingPrice(p)}
                 {reasons.length ? ` · ${reasons.slice(0, 2).join(", ")}` : ""}
               </p>
             </div>
