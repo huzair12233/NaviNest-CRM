@@ -19,6 +19,24 @@ export async function getProperties(sp: SearchParams) {
   const location = getParam(sp, "location");
   if (location) and.push({ location: { contains: location } });
 
+  // Budget — compares against whichever price field applies to that row's
+  // listing type, so the same Min/Max works across Sale, Rent and Heavy Deposit.
+  const priceMin = getParam(sp, "priceMin");
+  const priceMax = getParam(sp, "priceMax");
+  if (priceMin || priceMax) {
+    const range: Prisma.IntFilter = {
+      ...(priceMin ? { gte: Number(priceMin) } : {}),
+      ...(priceMax ? { lte: Number(priceMax) } : {}),
+    };
+    and.push({
+      OR: [
+        { listingType: "SALE", salePrice: range },
+        { listingType: "RENT", rent: range },
+        { listingType: "HEAVY_DEPOSIT", deposit: range },
+      ],
+    });
+  }
+
   const sort = getParam(sp, "sort") ?? "recent";
   const orderBy: Prisma.PropertyOrderByWithRelationInput =
     sort === "price-asc"

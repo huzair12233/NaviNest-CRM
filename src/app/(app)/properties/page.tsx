@@ -1,23 +1,34 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getProperties } from "@/features/properties/queries";
-import type { SearchParams } from "@/lib/pagination";
+import { getParam, type SearchParams } from "@/lib/pagination";
 import { PageHeader, EmptyState } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, propertyStatusTone } from "@/components/ui/badge";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
 import { SearchBox, FilterSelect, ClearFilters, Pagination } from "@/components/ui/query-controls";
 import { PROPERTY_TYPES, PROPERTY_STATUSES, BHK_OPTIONS, PROPERTY_LISTING_TYPES, PROPERTY_LISTING_LABELS } from "@/lib/constants";
-import { listingPrice } from "@/lib/utils";
+import { inr, listingPrice } from "@/lib/utils";
 import { parsePhotos, cldCard } from "@/lib/photos";
 import { Building, Plus, ImageIcon } from "lucide-react";
 
-const KEYS = ["q", "listingType", "segment", "propertyType", "status", "bhk", "sort"];
+const KEYS = ["q", "listingType", "segment", "propertyType", "status", "bhk", "priceMin", "priceMax", "sort"];
+
+// Preset amounts for the Budget dropdowns — scale changes with the listing type,
+// since ₹25,000 is a sensible rent but a meaningless sale price.
+const SALE_BUDGET_PRESETS = [
+  2000000, 3000000, 4000000, 5000000, 6000000, 8000000, 10000000, 15000000, 20000000, 30000000, 50000000,
+];
+const RENT_BUDGET_PRESETS = [5000, 10000, 15000, 20000, 25000, 30000, 40000, 50000, 75000, 100000, 150000];
 
 export default async function PropertiesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const sp = await searchParams;
   await requireUser();
   const { rows, total, page, pageSize } = await getProperties(sp);
+
+  const isRentFilter = getParam(sp, "listingType") === "RENT";
+  const budgetPresets = isRentFilter ? RENT_BUDGET_PRESETS : SALE_BUDGET_PRESETS;
+  const formatBudget = (v: number) => (isRentFilter ? `${inr(v)}/mo` : inr(v));
 
   return (
     <>
@@ -42,6 +53,17 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
         <FilterSelect name="propertyType" label="Type" options={PROPERTY_TYPES} />
         <FilterSelect name="bhk" label="BHK" options={BHK_OPTIONS.map((b) => ({ value: String(b), label: `${b} BHK` }))} />
         <FilterSelect name="status" options={PROPERTY_STATUSES} />
+        <FilterSelect
+          name="priceMin"
+          label="Budget"
+          options={budgetPresets.map((v) => ({ value: String(v), label: formatBudget(v) }))}
+          allLabel="No min"
+        />
+        <FilterSelect
+          name="priceMax"
+          options={budgetPresets.map((v) => ({ value: String(v), label: formatBudget(v) }))}
+          allLabel="No max"
+        />
         <FilterSelect
           name="sort"
           options={[
