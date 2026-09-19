@@ -208,6 +208,48 @@ notice instead of erroring — the rest of the app is unaffected.
 
 Manage photos from a property's detail page or its edit page (uploads save immediately).
 
+### Follow-up reminders (Email + Telegram, both free)
+
+Real WhatsApp automation isn't actually free — Meta requires business verification and
+charges per business-initiated message outside a customer-opened chat window. Instead:
+
+- **Email** sent via Gmail SMTP, through the brokerage's own Gmail account — free
+  (~500/day, far more than a small brokerage's reminder volume), and needs no domain of
+  your own (a transactional-email provider like Resend requires verifying a domain you
+  own, which doesn't work if you're only on a `*.vercel.app` URL).
+- **Telegram bot** — 100% free, no approval process. Each team member connects once
+  (Account page → "Connect Telegram" → opens a chat with our bot → tap Start) and from then
+  on gets an instant phone notification, the same feel as WhatsApp.
+
+**How it fires at the exact time:** Vercel's free Cron only runs once/day with hour-level
+precision — not tight enough for "remind me at 11:00". Instead, a free external scheduler
+([cron-job.org](https://cron-job.org), no cost) hits `/api/cron/reminders` every 5 minutes;
+that route finds any `FollowUp` whose `dueAt` has just passed and hasn't been reminded yet,
+sends email + Telegram to whoever it's assigned to, and marks it sent (so it's never
+double-sent). A 2-hour lookback window means a brief outage doesn't cause a flood of stale
+reminders later.
+
+**One-time setup after deploying:**
+1. Create a bot: message **@BotFather** on Telegram → `/newbot` → copy the token into
+   `TELEGRAM_BOT_TOKEN`, and the bot's `@username` into `TELEGRAM_BOT_USERNAME`.
+2. Register the webhook (run once, replace the placeholders):
+   ```
+   https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook?url=<NEXT_PUBLIC_APP_URL>/api/telegram/webhook&secret_token=<TELEGRAM_WEBHOOK_SECRET>
+   ```
+   Paste that URL in a browser once — Telegram should reply `{"ok":true,...}`.
+3. Turn on **2-Step Verification** on the sending Gmail account (myaccount.google.com/security),
+   then create an **App Password** at myaccount.google.com/apppasswords → set `GMAIL_USER`
+   (that Gmail address) and `GMAIL_APP_PASSWORD` (the 16-character password, no spaces).
+4. At [cron-job.org](https://cron-job.org), create a free job: URL = `<NEXT_PUBLIC_APP_URL>/api/cron/reminders`,
+   every 5 minutes, header `Authorization: Bearer <CRON_SECRET>`.
+5. Each team member visits **Account** in the CRM to connect Telegram and choose which
+   channels they want reminders on (both default to on). Email reminders all send from
+   the one Gmail account above — the recipient is still each team member's own login
+   email, only the "from" address is shared.
+
+If any of these env vars are missing, the relevant channel just silently no-ops (logged as
+a warning) — it never breaks lead/follow-up creation.
+
 ---
 
 ## 8. Test results

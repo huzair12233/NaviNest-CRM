@@ -3,8 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getParam, paginate, type SearchParams } from "@/lib/pagination";
 
-export async function getProperties(sp: SearchParams) {
-  const { skip, take, page, pageSize } = paginate(sp);
+export function buildPropertyWhere(sp: SearchParams): Prisma.PropertyWhereInput {
   const and: Prisma.PropertyWhereInput[] = [];
 
   const q = getParam(sp, "q")?.trim();
@@ -37,6 +36,13 @@ export async function getProperties(sp: SearchParams) {
     });
   }
 
+  return { AND: and };
+}
+
+export async function getProperties(sp: SearchParams) {
+  const { skip, take, page, pageSize } = paginate(sp);
+  const where = buildPropertyWhere(sp);
+
   const sort = getParam(sp, "sort") ?? "recent";
   const orderBy: Prisma.PropertyOrderByWithRelationInput =
     sort === "price-asc"
@@ -45,7 +51,6 @@ export async function getProperties(sp: SearchParams) {
         ? { salePrice: "desc" }
         : { createdAt: "desc" };
 
-  const where: Prisma.PropertyWhereInput = { AND: and };
   const [rows, total] = await Promise.all([
     db.property.findMany({
       where,
@@ -61,4 +66,19 @@ export async function getProperties(sp: SearchParams) {
     db.property.count({ where }),
   ]);
   return { rows, total, page, pageSize };
+}
+
+/** Unpaginated — for Excel export. */
+export async function getPropertiesForExport(sp: SearchParams) {
+  const where = buildPropertyWhere(sp);
+  return db.property.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    take: 5000,
+    include: {
+      owner: { select: { name: true } },
+      project: { select: { name: true } },
+      addedBy: { select: { name: true } },
+    },
+  });
 }

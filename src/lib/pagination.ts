@@ -16,3 +16,14 @@ export function paginate(sp: SearchParams, size = PAGE_SIZE) {
   const page = getPage(sp);
   return { page, skip: (page - 1) * size, take: size, pageSize: size };
 }
+
+/** Re-serialise the current filters (minus pagination) for links like Export. */
+export function toQueryString(sp: SearchParams, exclude: string[] = ["page"]): string {
+  const params = new URLSearchParams();
+  for (const [k, v] of Object.entries(sp)) {
+    if (exclude.includes(k) || v == null) continue;
+    for (const val of Array.isArray(v) ? v : [v]) params.append(k, val);
+  }
+  const s = params.toString();
+  return s ? `?${s}` : "";
+}

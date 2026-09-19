@@ -9,12 +9,11 @@ import { daysBetween, startOfDay } from "@/lib/utils";
 
 export type LeadListItem = Awaited<ReturnType<typeof getLeads>>["rows"][number];
 
-export async function getLeads(
+export function buildLeadWhere(
   user: SessionUser,
   sp: SearchParams,
   opts: { interest?: "SALE" | "RENT" | "HEAVY_DEPOSIT" } = {},
-) {
-  const { skip, take, page, pageSize } = paginate(sp);
+): Prisma.LeadWhereInput {
   const and: Prisma.LeadWhereInput[] = [leadScope(user)];
 
   const q = getParam(sp, "q")?.trim();
@@ -67,6 +66,17 @@ export async function getLeads(
     }
   }
 
+  return { AND: and };
+}
+
+export async function getLeads(
+  user: SessionUser,
+  sp: SearchParams,
+  opts: { interest?: "SALE" | "RENT" | "HEAVY_DEPOSIT" } = {},
+) {
+  const { skip, take, page, pageSize } = paginate(sp);
+  const where = buildLeadWhere(user, sp, opts);
+
   const sort = getParam(sp, "sort") ?? "recent";
   const orderBy: Prisma.LeadOrderByWithRelationInput =
     sort === "ageing"
@@ -76,8 +86,6 @@ export async function getLeads(
         : sort === "created"
           ? { createdAt: "desc" }
           : { lastActivityAt: "desc" };
-
-  const where: Prisma.LeadWhereInput = { AND: and };
 
   const [rows, total] = await Promise.all([
     db.lead.findMany({
@@ -107,6 +115,20 @@ export async function getLeads(
   }));
 
   return { rows: enriched, total, page, pageSize };
+}
+
+/** Unpaginated — for Excel export. Capped so a runaway filter can't export the whole table forever. */
+export async function getLeadsForExport(user: SessionUser, sp: SearchParams) {
+  const where = buildLeadWhere(user, sp);
+  return db.lead.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    take: 5000,
+    include: {
+      assignedTo: { select: { name: true } },
+      source: { select: { name: true } },
+    },
+  });
 }
 
 export async function getLeadFilterOptions(user: SessionUser) {

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getProperties } from "@/features/properties/queries";
-import { getParam, type SearchParams } from "@/lib/pagination";
+import { getParam, toQueryString, type SearchParams } from "@/lib/pagination";
 import { PageHeader, EmptyState } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, propertyStatusTone } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import { SearchBox, FilterSelect, ClearFilters, Pagination } from "@/components/
 import { PROPERTY_TYPES, PROPERTY_STATUSES, BHK_OPTIONS, PROPERTY_LISTING_TYPES, PROPERTY_LISTING_LABELS } from "@/lib/constants";
 import { inr, listingPrice } from "@/lib/utils";
 import { parsePhotos, cldCard } from "@/lib/photos";
-import { Building, Plus, ImageIcon } from "lucide-react";
+import { Building, Plus, ImageIcon, Download, Upload } from "lucide-react";
 
 const KEYS = ["q", "listingType", "segment", "propertyType", "status", "bhk", "priceMin", "priceMax", "sort"];
 
@@ -36,9 +36,17 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
         title="Properties"
         subtitle="NaviNest inventory — sale and rental, with live availability."
         actions={
-          <ButtonLink href="/properties/new" size="sm">
-            <Plus className="h-4 w-4" /> Add Property
-          </ButtonLink>
+          <>
+            <ButtonLink href={`/api/export/properties${toQueryString(sp)}`} size="sm" variant="outline">
+              <Download className="h-4 w-4" /> Export
+            </ButtonLink>
+            <ButtonLink href="/properties/import" size="sm" variant="outline">
+              <Upload className="h-4 w-4" /> Import
+            </ButtonLink>
+            <ButtonLink href="/properties/new" size="sm">
+              <Plus className="h-4 w-4" /> Add Property
+            </ButtonLink>
+          </>
         }
       />
 

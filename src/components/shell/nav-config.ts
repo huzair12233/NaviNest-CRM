@@ -22,6 +22,7 @@ import {
   Bell,
   UsersRound,
   Settings,
+  UserCircle,
 } from "lucide-react";
 
 export type NavItem = {
@@ -86,6 +87,7 @@ export const NAV: NavSection[] = [
     title: "System",
     items: [
       { label: "Notifications", href: "/notifications", icon: Bell },
+      { label: "Account", href: "/account", icon: UserCircle },
       { label: "Team", href: "/team", icon: UsersRound, adminOnly: true },
       { label: "Settings", href: "/settings", icon: Settings, adminOnly: true },
     ],

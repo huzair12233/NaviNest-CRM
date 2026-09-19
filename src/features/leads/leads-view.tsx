@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getLeads, getLeadFilterOptions, ageTone } from "./queries";
-import type { SearchParams } from "@/lib/pagination";
+import { toQueryString, type SearchParams } from "@/lib/pagination";
 import { PageHeader, EmptyState, Avatar } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, statusTone, temperatureTone } from "@/components/ui/badge";
@@ -20,7 +20,7 @@ import {
   AGEING_BUCKETS,
 } from "@/lib/constants";
 import { inrRange, relativeTime, toArray } from "@/lib/utils";
-import { Users, Plus, Phone } from "lucide-react";
+import { Users, Plus, Phone, Download, Upload } from "lucide-react";
 
 const FILTER_KEYS = ["q", "status", "temperature", "priority", "assignedToId", "sourceId", "bhk", "age", "bucket", "location", "sort"];
 
@@ -43,6 +43,8 @@ export async function LeadsView({
     getLeadFilterOptions(user),
   ]);
 
+  const exportHref = `/api/export/leads${toQueryString(interest ? { ...sp, interest } : sp)}`;
+
   return (
     <>
       <PageHeader
@@ -50,9 +52,17 @@ export async function LeadsView({
         subtitle={subtitle}
         breadcrumb={breadcrumb}
         actions={
-          <ButtonLink href="/leads/new" size="sm">
-            <Plus className="h-4 w-4" /> New Lead
-          </ButtonLink>
+          <>
+            <ButtonLink href={exportHref} size="sm" variant="outline">
+              <Download className="h-4 w-4" /> Export
+            </ButtonLink>
+            <ButtonLink href="/leads/import" size="sm" variant="outline">
+              <Upload className="h-4 w-4" /> Import
+            </ButtonLink>
+            <ButtonLink href="/leads/new" size="sm">
+              <Plus className="h-4 w-4" /> New Lead
+            </ButtonLink>
+          </>
         }
       />
 

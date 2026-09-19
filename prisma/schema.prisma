@@ -28,6 +28,13 @@ model User {
   role         String   @default("SALES") // ADMIN | MANAGER | SALES
   avatarColor  String   @default("#0F766E")
   active       Boolean  @default(true)
+
+  // Follow-up reminders
+  telegramChatId    String?
+  telegramLinkToken String?  @unique
+  notifyByEmail     Boolean  @default(true)
+  notifyByTelegram  Boolean  @default(true)
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -295,6 +302,7 @@ model FollowUp {
   outcome        String?
   completedAt    DateTime?
   nextFollowUpAt DateTime?
+  reminderSentAt DateTime?
   createdById    String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
