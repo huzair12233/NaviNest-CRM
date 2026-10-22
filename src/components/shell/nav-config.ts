@@ -23,6 +23,7 @@ import {
   UsersRound,
   Settings,
   UserCircle,
+  ListChecks,
 } from "lucide-react";
 
 export type NavItem = {
@@ -51,6 +52,7 @@ export const NAV: NavSection[] = [
       { label: "Rental Leads", href: "/leads/rental", icon: KeyRound },
       { label: "Heavy Deposit Leads", href: "/leads/heavy-deposit", icon: Wallet },
       { label: "Contacts", href: "/contacts", icon: UserSquare2 },
+      { label: "Call List", href: "/call-list", icon: ListChecks },
       { label: "Follow-ups", href: "/follow-ups", icon: PhoneCall },
       { label: "Tasks", href: "/tasks", icon: CheckSquare },
       { label: "Site Visits", href: "/site-visits", icon: MapPin },

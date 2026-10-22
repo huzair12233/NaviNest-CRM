@@ -17,6 +17,7 @@ import { MatchedProperties } from "@/features/leads/matched-properties";
 import { LeadQuickActions } from "@/features/leads/quick-actions";
 import { CompleteFollowUpButton } from "@/features/followups/complete-button";
 import { SiteVisitFeedbackButton } from "@/features/sitevisits/feedback-button";
+import { WhatsAppShareButton } from "@/features/properties/whatsapp-share-button";
 import {
   inr,
   inrRange,
@@ -55,7 +56,15 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       },
       interests: {
         orderBy: { sharedAt: "desc" },
-        include: { property: { select: { id: true, code: true, title: true, location: true, salePrice: true, rent: true, deposit: true, listingType: true, status: true } } },
+        include: {
+          property: {
+            select: {
+              id: true, code: true, title: true, location: true, city: true, salePrice: true, rent: true,
+              deposit: true, listingType: true, status: true, bhk: true, propertyType: true, carpetArea: true,
+              furnishing: true, floor: true, totalFloors: true, amenities: true, description: true,
+            },
+          },
+        },
       },
       deals: { select: { id: true, code: true, stage: true, value: true } },
     },
@@ -207,6 +216,13 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                       <Badge tone={it.status === "INTERESTED" ? "emerald" : it.status === "REJECTED" ? "red" : "slate"}>
                         {it.status === "SHARED" ? "Shared" : it.status === "INTERESTED" ? "Interested" : "Rejected"}
                       </Badge>
+                      <WhatsAppShareButton
+                        property={it.property}
+                        propertyId={it.property.id}
+                        phone={lead.whatsapp || lead.phone}
+                        leadId={lead.id}
+                        label=""
+                      />
                     </li>
                   ))}
                 </ul>

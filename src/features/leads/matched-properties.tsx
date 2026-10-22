@@ -5,6 +5,7 @@ import { matchProperties, matchBadge } from "@/lib/matching";
 import { Badge } from "@/components/ui/badge";
 import { listingPrice } from "@/lib/utils";
 import { ShareMatchButton } from "./share-match-button";
+import { WhatsAppShareButton } from "@/features/properties/whatsapp-share-button";
 import { EmptyState } from "@/components/ui/misc";
 import { Building } from "lucide-react";
 
@@ -51,6 +52,13 @@ export async function MatchedProperties({ lead }: { lead: Lead }) {
               </p>
             </div>
             <Badge tone={badge.tone as "emerald"}>{badge.label}</Badge>
+            <WhatsAppShareButton
+              property={p}
+              propertyId={p.id}
+              phone={lead.whatsapp || lead.phone}
+              leadId={lead.id}
+              score={score}
+            />
             <ShareMatchButton
               leadId={lead.id}
               propertyId={p.id}

@@ -52,6 +52,8 @@ model User {
   contacts        Contact[]
   owners          Owner[]
   channelPartners ChannelPartner[]
+  callListEntries       CallListEntry[] @relation("CallListOwner")
+  createdCallListEntries CallListEntry[] @relation("CallListCreator")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -274,6 +276,7 @@ model Lead {
   activities Activity[]
   deals      Deal[]
   tasks      Task[]     @relation("LeadTasks")
+  callListEntries CallListEntry[]
 
   @@index([status])
   @@index([interest])
@@ -367,6 +370,29 @@ model Task {
   updatedAt   DateTime @updatedAt
 
   @@index([status])
+}
+
+// A lightweight, scratch cold-calling worklist — distinct from Lead on purpose.
+// Pasting a raw list of 50-100 numbers (many "Busy"/"Invalid"/dead) should not
+// pollute the Leads table or its conversion/ageing metrics. Promote a row to a
+// real Lead explicitly via `leadId` once it's worth tracking.
+model CallListEntry {
+  id           String   @id @default(cuid())
+  name         String?
+  phone        String
+  remark       String?  // original note from the pasted source (e.g. "Busy")
+  status       String   @default("Pending") // Pending | Called | Skipped | Converted
+  leadId       String?
+  lead         Lead?    @relation(fields: [leadId], references: [id])
+  assignedToId String?
+  assignedTo   User?    @relation("CallListOwner", fields: [assignedToId], references: [id])
+  createdById  String?
+  createdBy    User?    @relation("CallListCreator", fields: [createdById], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([status])
+  @@index([assignedToId])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -34,6 +34,11 @@ export function taskScope(user: SessionUser): Prisma.TaskWhereInput {
   return { OR: [{ assignedToId: user.id }, { createdById: user.id }] };
 }
 
+export function callListScope(user: SessionUser): Prisma.CallListEntryWhereInput {
+  if (user.role === "ADMIN" || user.role === "MANAGER") return {};
+  return { OR: [{ assignedToId: user.id }, { createdById: user.id }] };
+}
+
 export const isManager = (u: SessionUser) => u.role === "ADMIN" || u.role === "MANAGER";
 export const isAdmin = (u: SessionUser) => u.role === "ADMIN";
 

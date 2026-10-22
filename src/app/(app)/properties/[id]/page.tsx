@@ -12,6 +12,7 @@ import { PropertyStatusMenu } from "@/features/properties/status-menu";
 import { PhotoGallery } from "@/features/properties/photo-gallery";
 import { PhotoUploader } from "@/features/properties/photo-uploader";
 import { Timeline } from "@/features/activity/timeline";
+import { WhatsAppShareButton } from "@/features/properties/whatsapp-share-button";
 import { parsePhotos } from "@/lib/photos";
 import { cloudinaryConfigured } from "@/lib/cloudinary";
 import { inr, listingPrice, toArray, formatDate } from "@/lib/utils";
@@ -73,6 +74,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
         }
         actions={
           <>
+            <WhatsAppShareButton property={property} label="Share on WhatsApp" />
             <PropertyStatusMenu id={property.id} current={property.status} />
             <ButtonLink href={`/properties/${id}/edit`} size="sm" variant="outline">
               <Pencil className="h-4 w-4" /> Edit
@@ -176,6 +178,13 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         </div>
                         {sharedLeadIds.has(lead.id) && <Badge tone="emerald">Shared</Badge>}
                         <Badge tone={badge.tone as "emerald"}>{badge.label}</Badge>
+                        <WhatsAppShareButton
+                          property={property}
+                          propertyId={property.id}
+                          phone={lead.whatsapp || lead.phone}
+                          leadId={lead.id}
+                          score={score}
+                        />
                       </li>
                     );
                   })}

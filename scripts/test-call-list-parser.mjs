@@ -1,0 +1,142 @@
+import { parseCallList } from "../src/lib/call-list-parser.ts";
+
+const sample = `ZAID SHAIΚΗ
+7738039772
+Call disconnected
+70
+QURESHI NAZN
+8655657968
+Auto cut
+71
+SAMRIN MUKAC
+8793236784
+Busy
+72
+SIKANDAR SHA
+9892969267
+Ringing
+73
+SUREKHA KEDA
+8108961836
+She is searching in
+74
+SHANKAR
+9326532216 Ringing
+75
+MALIK
+9167013613
+Switch off
+76
+NAYAB SUFIYAN
+8793405727
+Busy
+77
+WASEEM
+9986148766
+ging/ share deatails
+78
+FARDIN
+9152982810
+Busy
+79
+SHAHZAD SHAI
+8693887400
+Busy
+80
+SHAHID
+966537082885
+Invalid
+81
+SAUDI
+966510903829
+Invalid
+82
+DUBAI
+971502455826
+Invalid
+83
+TARANDEEP
+9763491225
+Ringing
+84
+MOHD AYAN
+966575273118
+Invalid
+85
+8275157025
+Call back
+86
+TABASSUM THA
+9004195858
+Ringing
+87
+AMAN KHAN
+8080015324
+Call back after Eavning
+88
+KHAN ARBAZ R
+9892758634
+Incoming not available
+89 NILAM RAHUL N
+9004236288
+Ringing
+90 ANUJ PHATAK
+9820717193
+Out of service
+91
+KHAN ATIF
+9321030472
+Busy
+92
+SHYAM
+9594480757
+Busy
+93
+KAUSAR JAHAN
+8898980698
+Not answer
+94
+ANOOP GUPTA
+9819727409
+Busy
+95
+ALTAMASH
+8424953036
+Busy
+96
+RUKSAR DANDI
+7039994359
+Busy
+97
+AJIT BAGAL
+8888669012
+Call disconnected
+98
+MUZAMMIL KHA
+7302588115
+Ringing
+99
+FEROZ
+9833200583
+Deatails shred searching 1 bhk in 40 lacs
+100
+RAJ
+9702952210
+Busy
+101 TAHER JAMAL
+8446756068
+Ringing
+102
+RAVI MAKWANA
+9821283132
+Call disconnected
+103
+SADDAM ANSAF
+8655186590
+Incoming not available`;
+
+const rows = parseCallList(sample);
+console.log(`Parsed ${rows.length} rows (expected 35)\n`);
+rows.forEach((r, i) => {
+  console.log(`${i + 1}. [${r.name || "—"}] ${r.phone} :: ${r.remark || "—"}`);
+});

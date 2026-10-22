@@ -128,6 +128,8 @@ export const SITE_VISIT_STATUSES = [
 
 export const TASK_STATUSES = ["Pending", "InProgress", "Completed", "Cancelled"] as const;
 
+export const CALL_LIST_STATUSES = ["Pending", "Called", "Skipped", "Converted"] as const;
+
 // Sales pipeline — ordered, with default probability
 export const PIPELINE_STAGES = [
   { key: "Qualified", label: "Qualified", probability: 15 },
