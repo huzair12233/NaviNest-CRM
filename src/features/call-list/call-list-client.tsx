@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Phone, MessageCircle, Check, X, Trash2, UserPlus, Loader2 } from "lucide-react";
+import { Phone, MessageCircle, Check, ChevronDown, X, Trash2, UserPlus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/misc";
@@ -20,6 +20,8 @@ import {
   deleteCallListEntry,
   saveCallListEntryAsLead,
 } from "./actions";
+
+const CALL_OUTCOMES = ["Interested", "Not Interested", "Ringing", "Call Cut", "Busy", "Switch Off", "No Answer", "Call Back"];
 
 type Entry = {
   id: string;
@@ -139,11 +141,7 @@ function Row({ entry }: { entry: Entry }) {
                 <MessageCircle className="h-3.5 w-3.5" />
               </Button>
             </a>
-            {entry.status === "Pending" && (
-              <Button size="sm" variant="outline" disabled={pending} onClick={() => act(() => setCallListStatus(entry.id, "Called"))} title="Mark called">
-                {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-              </Button>
-            )}
+            {entry.status === "Pending" && <CallOutcomeMenu entry={entry} pending={pending} act={act} />}
             {entry.status === "Pending" && (
               <Button size="sm" variant="outline" disabled={pending} onClick={() => act(() => setCallListStatus(entry.id, "Skipped"))} title="Skip">
                 <X className="h-3.5 w-3.5" />
@@ -188,6 +186,81 @@ function Row({ entry }: { entry: Entry }) {
         </ActionForm>
       </Drawer>
     </li>
+  );
+}
+
+function CallOutcomeMenu({
+  entry,
+  pending,
+  act,
+}: {
+  entry: Entry;
+  pending: boolean;
+  act: (fn: () => Promise<{ ok: boolean; message?: string }>) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [custom, setCustom] = React.useState("");
+
+  const choose = (remark: string) => {
+    setOpen(false);
+    setCustom("");
+    act(() => setCallListStatus(entry.id, "Called", remark));
+  };
+
+  return (
+    <div className="relative">
+      <Button size="sm" variant="outline" disabled={pending} onClick={() => setOpen((o) => !o)} title="Mark called">
+        {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+        <ChevronDown className="h-3 w-3" />
+      </Button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 z-20 mt-1 w-60 rounded-lg border border-ink-200 bg-white p-2.5 shadow-pop">
+            <p className="mb-1.5 px-0.5 text-xs font-medium text-ink-400">Call outcome</p>
+            <div className="flex flex-wrap gap-1.5">
+              {CALL_OUTCOMES.map((o) => (
+                <button
+                  key={o}
+                  type="button"
+                  onClick={() => choose(o)}
+                  className="rounded-full border border-ink-200 px-2.5 py-1 text-xs text-ink-700 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
+                >
+                  {o}
+                </button>
+              ))}
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (custom.trim()) choose(custom.trim());
+              }}
+              className="mt-2 flex gap-1.5"
+            >
+              <input
+                value={custom}
+                onChange={(e) => setCustom(e.target.value)}
+                placeholder="Other comment…"
+                className="input-base h-8 flex-1 text-xs"
+              />
+              <Button size="sm" type="submit" disabled={!custom.trim()}>
+                Add
+              </Button>
+            </form>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                act(() => setCallListStatus(entry.id, "Called"));
+              }}
+              className="mt-2 w-full text-left text-xs text-ink-400 hover:text-ink-600"
+            >
+              Skip comment — just mark called
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 

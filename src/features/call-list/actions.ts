@@ -46,9 +46,12 @@ export async function updateCallListEntry(id: string, _prev: ActionState, fd: Fo
   return ok("Saved");
 }
 
-export async function setCallListStatus(id: string, status: string): Promise<ActionState> {
+export async function setCallListStatus(id: string, status: string, remark?: string): Promise<ActionState> {
   await requireUser();
-  await db.callListEntry.update({ where: { id }, data: { status } });
+  await db.callListEntry.update({
+    where: { id },
+    data: { status, ...(remark !== undefined ? { remark: remark || null } : {}) },
+  });
   revalidatePath("/call-list");
   return ok(status === "Called" ? "Marked called" : `Marked ${status.toLowerCase()}`);
 }
