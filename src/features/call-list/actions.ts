@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { callListScope } from "@/lib/rbac";
 import { parseCallList } from "@/lib/call-list-parser";
 import { isValidPhone, normalizePhone } from "@/lib/utils";
 import { ActionState, fail, ok } from "@/lib/action-result";
@@ -32,33 +33,36 @@ export async function parseAndSaveCallList(_prev: ActionState, fd: FormData): Pr
 }
 
 export async function updateCallListEntry(id: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  await requireUser();
+  const user = await requireUser();
   const name = String(fd.get("name") || "").trim();
   const phone = String(fd.get("phone") || "").trim();
   const remark = String(fd.get("remark") || "").trim();
   if (!phone) return fail("Phone is required");
 
-  await db.callListEntry.update({
-    where: { id },
+  const { count } = await db.callListEntry.updateMany({
+    where: { AND: [{ id }, callListScope(user)] },
     data: { name: name || null, phone, remark: remark || null },
   });
+  if (!count) return fail("Entry not found");
   revalidatePath("/call-list");
   return ok("Saved");
 }
 
 export async function setCallListStatus(id: string, status: string, remark?: string): Promise<ActionState> {
-  await requireUser();
-  await db.callListEntry.update({
-    where: { id },
+  const user = await requireUser();
+  const { count } = await db.callListEntry.updateMany({
+    where: { AND: [{ id }, callListScope(user)] },
     data: { status, ...(remark !== undefined ? { remark: remark || null } : {}) },
   });
+  if (!count) return fail("Entry not found");
   revalidatePath("/call-list");
   return ok(status === "Called" ? "Marked called" : `Marked ${status.toLowerCase()}`);
 }
 
 export async function deleteCallListEntry(id: string): Promise<ActionState> {
-  await requireUser();
-  await db.callListEntry.delete({ where: { id } });
+  const user = await requireUser();
+  const { count } = await db.callListEntry.deleteMany({ where: { AND: [{ id }, callListScope(user)] } });
+  if (!count) return fail("Entry not found");
   revalidatePath("/call-list");
   return ok("Removed");
 }
@@ -66,7 +70,7 @@ export async function deleteCallListEntry(id: string): Promise<ActionState> {
 export async function clearCallListByStatus(status: string): Promise<ActionState> {
   const user = await requireUser();
   const { count } = await db.callListEntry.deleteMany({
-    where: { status, OR: [{ assignedToId: user.id }, { createdById: user.id }] },
+    where: { AND: [{ status }, callListScope(user)] },
   });
   revalidatePath("/call-list");
   return ok(`Removed ${count} entr${count === 1 ? "y" : "ies"}`);
@@ -79,7 +83,7 @@ async function nextLeadCode() {
 
 export async function saveCallListEntryAsLead(entryId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireUser();
-  const entry = await db.callListEntry.findUnique({ where: { id: entryId } });
+  const entry = await db.callListEntry.findFirst({ where: { AND: [{ id: entryId }, callListScope(user)] } });
   if (!entry) return fail("Entry not found");
 
   const fullName = String(fd.get("fullName") || entry.name || "").trim();
