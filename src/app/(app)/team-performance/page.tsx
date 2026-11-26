@@ -14,7 +14,11 @@ export default async function TeamPerformancePage() {
     <>
       <PageHeader title="Team Performance" subtitle="Where every member stands this cycle." />
 
-      <div className="mb-5 grid gap-4 lg:grid-cols-3">
+      <div className="mb-5 grid gap-4 lg:grid-cols-4">
+        <Card>
+          <CardHeader title="Leads added" />
+          <CardBody><MiniBar data={team.map((m) => ({ name: m.name.split(" ")[0], value: m.leadsAdded }))} color="#2563eb" /></CardBody>
+        </Card>
         <Card>
           <CardHeader title="Leads owned" />
           <CardBody><MiniBar data={team.map((m) => ({ name: m.name.split(" ")[0], value: m.leads }))} /></CardBody>
@@ -41,7 +45,8 @@ export default async function TeamPerformancePage() {
                 </div>
               </div>
               <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                <Row label="Leads" value={m.leads} />
+                <Row label="Leads added" value={m.leadsAdded} />
+                <Row label="Leads assigned" value={m.leads} />
                 <Row label="Site visits" value={m.visits} />
                 <Row label="Open deals" value={m.openDeals} />
                 <Row label="Won deals" value={m.wonDeals} />

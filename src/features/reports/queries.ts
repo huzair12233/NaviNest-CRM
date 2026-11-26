@@ -41,8 +41,9 @@ export async function sourceAttribution() {
 
 export async function teamPerformance() {
   const users = await db.user.findMany({ where: { active: true }, orderBy: { name: "asc" } });
-  const [leads, visits, deals, commissions] = await Promise.all([
+  const [leads, leadsAdded, visits, deals, commissions] = await Promise.all([
     db.lead.groupBy({ by: ["assignedToId"], _count: { _all: true } }),
+    db.lead.groupBy({ by: ["createdById"], _count: { _all: true } }),
     db.siteVisit.groupBy({ by: ["assignedToId"], _count: { _all: true } }),
     db.deal.findMany({ select: { assignedToId: true, stage: true, value: true } }),
     db.commission.findMany({ select: { expectedAmount: true, receivedAmount: true, deal: { select: { assignedToId: true } } } }),
@@ -58,6 +59,7 @@ export async function teamPerformance() {
       role: u.role,
       color: u.avatarColor,
       leads: leads.find((l) => l.assignedToId === u.id)?._count._all ?? 0,
+      leadsAdded: leadsAdded.find((l) => l.createdById === u.id)?._count._all ?? 0,
       visits: visits.find((v) => v.assignedToId === u.id)?._count._all ?? 0,
       openDeals: uDeals.filter((d) => !d.stage.startsWith("Closed")).length,
       wonDeals: won.length,

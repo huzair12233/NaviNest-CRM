@@ -32,7 +32,7 @@ export function buildLeadWhere(
   else if (bucket === "won") and.push({ status: "Converted" });
   else if (bucket === "lost") and.push({ status: { in: ["Lost", "Not Interested"] } });
 
-  for (const key of ["temperature", "priority", "assignedToId", "sourceId"] as const) {
+  for (const key of ["temperature", "priority", "assignedToId", "createdById", "sourceId"] as const) {
     const v = getParam(sp, key);
     if (v) and.push({ [key]: v });
   }

@@ -1,5 +1,6 @@
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
+import Link from "next/link";
 import { PageHeader, Avatar } from "@/components/ui/misc";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,7 @@ export default async function TeamPage() {
   await requireRole("ADMIN");
   const users = await db.user.findMany({
     orderBy: { createdAt: "asc" },
-    include: { _count: { select: { leads: true, deals: true } } },
+    include: { _count: { select: { leads: true, createdLeads: true, deals: true } } },
   });
 
   return (
@@ -34,13 +35,22 @@ export default async function TeamPage() {
       />
 
       <Table>
-        <THead><tr><TH>Member</TH><TH>Email</TH><TH>Role</TH><TH align="right">Leads</TH><TH align="right">Deals</TH><TH>Status</TH><TH>Joined</TH><TH></TH></tr></THead>
+        <THead><tr><TH>Member</TH><TH>Email</TH><TH>Role</TH><TH align="right">Leads Added</TH><TH align="right">Leads Assigned</TH><TH align="right">Deals</TH><TH>Status</TH><TH>Joined</TH><TH></TH></tr></THead>
         <TBody>
           {users.map((u) => (
             <TR key={u.id}>
               <TD><span className="flex items-center gap-2"><Avatar name={u.name} color={u.avatarColor} size={24} /><span className="font-medium text-ink-900">{u.name}</span></span></TD>
               <TD className="text-sm text-ink-500">{u.email}</TD>
               <TD><Badge tone={u.role === "ADMIN" ? "brand" : u.role === "MANAGER" ? "violet" : "slate"}>{ROLE_LABELS[u.role]}</Badge></TD>
+              <TD align="right">
+                {u._count.createdLeads > 0 ? (
+                  <Link href={`/leads?createdById=${u.id}`} className="text-brand-700 hover:underline">
+                    {u._count.createdLeads}
+                  </Link>
+                ) : (
+                  0
+                )}
+              </TD>
               <TD align="right">{u._count.leads}</TD>
               <TD align="right">{u._count.deals}</TD>
               <TD><Badge tone={u.active ? "emerald" : "slate"}>{u.active ? "Active" : "Disabled"}</Badge></TD>
