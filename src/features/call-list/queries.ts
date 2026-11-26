@@ -9,11 +9,12 @@ export async function getCallListEntries(user: SessionUser, sp: SearchParams) {
   const status = getParam(sp, "status") ?? "Pending";
   const scope = callListScope(user);
   const where = status === "All" ? scope : { AND: [scope, { status }] };
+  const orderBy = status === "Called" ? { calledAt: "desc" as const } : { createdAt: "desc" as const };
 
   const [rows, counts, existingLeadPhones] = await Promise.all([
     db.callListEntry.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy,
       take: 500,
       include: { assignedTo: { select: { name: true, avatarColor: true } }, lead: { select: { id: true, code: true } } },
     }),
@@ -43,10 +44,11 @@ export async function getCallListEntriesForExport(user: SessionUser, sp: SearchP
   const status = getParam(sp, "status");
   const scope = callListScope(user);
   const where = status && status !== "All" ? { AND: [scope, { status }] } : scope;
+  const orderBy = status === "Called" ? { calledAt: "desc" as const } : { createdAt: "desc" as const };
 
   return db.callListEntry.findMany({
     where,
-    orderBy: { createdAt: "desc" },
+    orderBy,
     take: 5000,
     include: {
       assignedTo: { select: { name: true } },
