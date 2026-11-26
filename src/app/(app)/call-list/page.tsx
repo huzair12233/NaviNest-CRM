@@ -1,14 +1,18 @@
 import { requireUser } from "@/lib/auth";
+import { isManager } from "@/lib/rbac";
 import { getCallListEntries } from "@/features/call-list/queries";
-import type { SearchParams } from "@/lib/pagination";
+import { toQueryString, type SearchParams } from "@/lib/pagination";
 import { PageHeader } from "@/components/ui/misc";
+import { ButtonLink } from "@/components/ui/button";
 import { TabLinks } from "@/components/ui/tabs";
 import { CallListClient } from "@/features/call-list/call-list-client";
+import { Download } from "lucide-react";
 
 export default async function CallListPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const sp = await searchParams;
   const user = await requireUser();
   const { rows, status, counts } = await getCallListEntries(user, sp);
+  const exportHref = `/api/export/call-list${toQueryString({ status })}`;
 
   const tabs = [
     { key: "Pending", label: "Pending", href: "/call-list?status=Pending", count: counts.Pending },
@@ -23,6 +27,13 @@ export default async function CallListPage({ searchParams }: { searchParams: Pro
       <PageHeader
         title="Call List"
         subtitle="Paste a raw cold-calling list, work through it with Call/WhatsApp, and save the good ones as Leads."
+        actions={
+          isManager(user) ? (
+            <ButtonLink href={exportHref} size="sm" variant="outline">
+              <Download className="h-4 w-4" /> Download report
+            </ButtonLink>
+          ) : undefined
+        }
       />
       <div className="mb-4">
         <TabLinks tabs={tabs} active={status} />

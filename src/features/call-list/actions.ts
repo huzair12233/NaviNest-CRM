@@ -52,7 +52,11 @@ export async function setCallListStatus(id: string, status: string, remark?: str
   const user = await requireUser();
   const { count } = await db.callListEntry.updateMany({
     where: { AND: [{ id }, callListScope(user)] },
-    data: { status, ...(remark !== undefined ? { remark: remark || null } : {}) },
+    data: {
+      status,
+      ...(remark !== undefined ? { remark: remark || null } : {}),
+      ...(status === "Called" ? { calledAt: new Date() } : {}),
+    },
   });
   if (!count) return fail("Entry not found");
   revalidatePath("/call-list");

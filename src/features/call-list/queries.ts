@@ -37,3 +37,21 @@ export async function getCallListEntries(user: SessionUser, sp: SearchParams) {
     counts: { Pending: counts[0], Called: counts[1], Skipped: counts[2], Converted: counts[3] },
   };
 }
+
+/** Unpaginated — for the admin export. Capped so a runaway filter can't export forever. */
+export async function getCallListEntriesForExport(user: SessionUser, sp: SearchParams) {
+  const status = getParam(sp, "status");
+  const scope = callListScope(user);
+  const where = status && status !== "All" ? { AND: [scope, { status }] } : scope;
+
+  return db.callListEntry.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    take: 5000,
+    include: {
+      assignedTo: { select: { name: true } },
+      createdBy: { select: { name: true } },
+      lead: { select: { code: true } },
+    },
+  });
+}

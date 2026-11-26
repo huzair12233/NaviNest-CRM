@@ -35,11 +35,12 @@ export function taskScope(user: SessionUser): Prisma.TaskWhereInput {
 }
 
 /**
- * Call lists are a personal cold-calling worklist, not shared CRM data —
- * always scoped to the current user, even for ADMIN/MANAGER, so two people
- * calling off different pasted lists never see each other's entries.
+ * Call lists are a personal cold-calling worklist — SALES only see their own
+ * pasted list, so two people calling off different lists never see each
+ * other's entries. ADMIN/MANAGER see everyone's, for oversight/export.
  */
 export function callListScope(user: SessionUser): Prisma.CallListEntryWhereInput {
+  if (user.role === "ADMIN" || user.role === "MANAGER") return {};
   return { OR: [{ assignedToId: user.id }, { createdById: user.id }] };
 }
 

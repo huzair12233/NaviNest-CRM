@@ -380,8 +380,9 @@ model CallListEntry {
   id           String   @id @default(cuid())
   name         String?
   phone        String
-  remark       String?  // original note from the pasted source (e.g. "Busy")
+  remark       String?  // original note from the pasted source (e.g. "Busy"), later reused for the call outcome
   status       String   @default("Pending") // Pending | Called | Skipped | Converted
+  calledAt     DateTime? // when it was last marked Called — for the admin export's "Called at" column
   leadId       String?
   lead         Lead?    @relation(fields: [leadId], references: [id])
   assignedToId String?
