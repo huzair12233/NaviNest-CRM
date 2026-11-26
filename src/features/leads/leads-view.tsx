@@ -22,7 +22,7 @@ import {
 import { inrRange, relativeTime, toArray } from "@/lib/utils";
 import { Users, Plus, Phone, Download, Upload } from "lucide-react";
 
-const FILTER_KEYS = ["q", "status", "temperature", "priority", "assignedToId", "sourceId", "bhk", "age", "bucket", "location", "sort"];
+const FILTER_KEYS = ["q", "status", "temperature", "priority", "assignedToId", "createdById", "sourceId", "bhk", "age", "bucket", "location", "sort"];
 
 export async function LeadsView({
   sp,
@@ -78,11 +78,18 @@ export async function LeadsView({
           options={AGEING_BUCKETS.map((b) => ({ value: b.key, label: b.label }))}
         />
         {opts.canFilterTeam && (
-          <FilterSelect
-            name="assignedToId"
-            label="Owner"
-            options={opts.team.map((t) => ({ value: t.id, label: t.name }))}
-          />
+          <>
+            <FilterSelect
+              name="assignedToId"
+              label="Owner"
+              options={opts.team.map((t) => ({ value: t.id, label: t.name }))}
+            />
+            <FilterSelect
+              name="createdById"
+              label="Added by"
+              options={opts.team.map((t) => ({ value: t.id, label: t.name }))}
+            />
+          </>
         )}
         <FilterSelect name="sourceId" label="Source" options={opts.sources.map((s) => ({ value: s.id, label: s.name }))} />
         <FilterSelect
@@ -132,6 +139,7 @@ export async function LeadsView({
                       {l.interest === "RENT" ? inrRange(l.rentMin, l.rentMax) : inrRange(l.budgetMin, l.budgetMax)}
                     </p>
                     {locs.length > 0 && <p className="truncate text-xs text-ink-400">{locs.join(", ")}</p>}
+                    {l.createdBy && <p className="mt-0.5 text-xs text-ink-400">Added by {l.createdBy.name.split(" ")[0]}</p>}
                     <div className="mt-2 flex items-center justify-between">
                       <Badge tone={statusTone(l.status)}>{l.status}</Badge>
                       <span className="flex items-center gap-2 text-xs text-ink-400">
@@ -209,6 +217,9 @@ export async function LeadsView({
                         </span>
                       ) : (
                         <span className="text-xs text-ink-400">Unassigned</span>
+                      )}
+                      {l.createdBy && (
+                        <span className="mt-0.5 block text-[11px] text-ink-400">Added by {l.createdBy.name.split(" ")[0]}</span>
                       )}
                     </TD>
                     <TD className="text-xs">

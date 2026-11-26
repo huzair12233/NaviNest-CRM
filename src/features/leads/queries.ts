@@ -95,6 +95,7 @@ export async function getLeads(
       take,
       include: {
         assignedTo: { select: { name: true, avatarColor: true } },
+        createdBy: { select: { name: true, avatarColor: true } },
         source: { select: { name: true } },
         followUps: {
           where: { status: "Pending" },
