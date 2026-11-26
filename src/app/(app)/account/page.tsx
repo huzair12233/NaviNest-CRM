@@ -5,6 +5,7 @@ import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import { ActionForm, SubmitButton } from "@/components/form/action-form";
 import { CheckboxField } from "@/components/form/fields";
 import { TelegramConnect } from "@/features/account/telegram-connect";
+import { ChangePasswordForm } from "@/features/account/change-password-form";
 import { updateNotifyPrefs } from "@/features/account/actions";
 import { telegramConfigured } from "@/lib/telegram";
 import { emailConfigured } from "@/lib/email";
@@ -24,6 +25,13 @@ export default async function AccountPage() {
           <CardBody className="space-y-1 text-sm">
             <p className="font-medium text-ink-900">{me.name}</p>
             <p className="text-ink-500">{me.email}</p>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Change password" subtitle="Update the password you use to log in." />
+          <CardBody>
+            <ChangePasswordForm />
           </CardBody>
         </Card>
 
